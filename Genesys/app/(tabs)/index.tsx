@@ -6,79 +6,98 @@ import {
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
-// Firebase Engine
-import { initializeApp, getApps } from "firebase/app";
+// Firebase
+import { initializeApp, getApps, getApp } from "firebase/app";
 import { 
-  initializeAuth,  
+  getAuth, 
+  initializeAuth,
   createUserWithEmailAndPassword,
   onAuthStateChanged,
   signInWithEmailAndPassword,
   updateProfile,
-  signInWithPopup,
   GoogleAuthProvider,
+  signInWithCredential,
   // @ts-ignore
   getReactNativePersistence 
 } from "firebase/auth";
-
-// Persistência para mobile
 import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
+
+// Google Login Nativo
+import * as Google from 'expo-auth-session/providers/google';
+import * as WebBrowser from 'expo-web-browser';
+
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 
+WebBrowser.maybeCompleteAuthSession();
+
 const firebaseConfig = {
-  apiKey: "AIzaSyCfTamd-cCerKdXxsl1SrOqKKKz5gf7qek",
-  authDomain: "biosyntech-fe492.firebaseapp.com",
-  projectId: "biosyntech-fe492",
-  storageBucket: "biosyntech-fe492.firebasestorage.app",
-  messagingSenderId: "731720654700",
-  appId: "1:731720654700:web:40ecd6b5304b0cd1171d49"
+  apiKey: "AIzaSyAC-uFM4pwfXDuKxGvsFM3Z7v7oF0BC3U4",
+  authDomain: "biosyntech-8ffe1.firebaseapp.com",
+  projectId: "biosyntech-8ffe1",
+  storageBucket: "biosyntech-8ffe1.firebasestorage.app",
+  messagingSenderId: "642421745104",
+  appId: "1:642421745104:web:ef5298a181d4a178f145d5"
 };
 
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-const auth = initializeAuth(app, { 
-  // @ts-ignore
-  persistence: getReactNativePersistence(ReactNativeAsyncStorage)
-});
+// Inicialização "Blindada" contra erros de módulo e re-inicialização
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+let auth: any;
+try {
+  auth = initializeAuth(app, {
+    persistence: getReactNativePersistence(ReactNativeAsyncStorage)
+  });
+} catch (e) {
+  auth = getAuth(app);
+}
 
 export default function LoginScreen() {
   const router = useRouter();
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
-
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  // LÓGICA DE MONITORAMENTO (onAuthStateChanged)
+  // Configuração do Google
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    androidClientId: "642421745104-dumta3ri29l1spsj7ikrlqfuqu922m2k.apps.googleusercontent.com", // Você pega isso no console do Google Cloud
+    iosClientId: "731720654700-vossos-ids.apps.googleusercontent.com",
+    webClientId: "642421745104-5b5lhva0c32t6rfl72elovp71ojcl432.apps.googleusercontent.com",
+  },{
+      useProxy: true, // Importante para funcionar no Expo Go
+  }
+);
+
+  useEffect(() => {
+    if (response?.type === 'success') {
+      const { id_token } = response.params;
+      const credential = GoogleAuthProvider.credential(id_token);
+      setLoading(true);
+      signInWithCredential(auth, credential)
+        .catch(err => Alert.alert("Erro Google", err.message))
+        .finally(() => setLoading(false));
+    }
+  }, [response]);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        console.log("Usuário autenticado:", user.email);
-        router.replace('/(tabs)'); 
-      }
+      if (user) router.replace('/(tabs)'); 
     });
     return unsubscribe;
   }, []);
 
-  // LOGIN COM E-MAIL OU CADASTRO
   const handleAuth = async () => {
-    if (!email || !password) {
-      Alert.alert("Atenção", "Preencha e-mail e senha.");
-      return;
-    }
-
+    if (!email || !password) return Alert.alert("Atenção", "Preencha tudo!");
     setLoading(true);
     try {
       if (isLogin) {
         await signInWithEmailAndPassword(auth, email, password);
       } else {
-        if (password !== confirmPassword) {
-          Alert.alert("Erro", "As senhas não coincidem.");
-          return;
-        }
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        await updateProfile(userCredential.user, { displayName: username });
+        if (password !== confirmPassword) throw new Error("Senhas não batem");
+        const userCr = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(userCr.user, { displayName: username });
       }
     } catch (error: any) {
       Alert.alert("Erro GenesysFit", error.message);
@@ -87,24 +106,9 @@ export default function LoginScreen() {
     }
   };
 
-  // LOGIN COM GOOGLE
-  const handleGoogleLogin = async () => {
-    const provider = new GoogleAuthProvider();
-    setLoading(true);
-    try {
-      // Nota: No mobile nativo real, usa-se expo-auth-session. 
-      // O signInWithPopup funciona aqui se você estiver testando no Navegador (Expo Web).
-      await signInWithPopup(auth, provider);
-    } catch (error: any) {
-      Alert.alert("Google Login", "Certifique-se de que o login via popup está habilitado.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
         <ThemedView style={styles.container}>
           
           <View style={styles.header}>
@@ -126,37 +130,33 @@ export default function LoginScreen() {
             {!isLogin && (
               <View style={styles.inputBox}>
                 <Ionicons name="person-outline" size={20} color="#D4AF37" />
-                <TextInput placeholder="Nome de Usuário" style={styles.inputField} value={username} onChangeText={setUsername} />
+                <TextInput placeholder="Nome" style={styles.inputField} value={username} onChangeText={setUsername} />
               </View>
             )}
-
             <View style={styles.inputBox}>
               <Ionicons name="mail-outline" size={20} color="#D4AF37" />
-              <TextInput placeholder="E-mail" style={styles.inputField} keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} />
+              <TextInput placeholder="E-mail" style={styles.inputField} autoCapitalize="none" value={email} onChangeText={setEmail} />
             </View>
-
             <View style={styles.inputBox}>
               <Ionicons name="lock-closed-outline" size={20} color="#D4AF37" />
               <TextInput placeholder="Senha" style={styles.inputField} secureTextEntry value={password} onChangeText={setPassword} />
             </View>
-          {!isLogin && (
-            <View style={styles.inputBox}>
+            {!isLogin && (
+              <View style={styles.inputBox}>
                 <Ionicons name="shield-checkmark-outline" size={20} color="#D4AF37" />
-                <TextInput 
-                  placeholder="Confirmar Senha" 
-                  style={styles.inputField} 
-                  secureTextEntry 
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                />
-            </View>
+                <TextInput placeholder="Confirmar" style={styles.inputField} secureTextEntry value={confirmPassword} onChangeText={setConfirmPassword} />
+              </View>
             )}
+
             <TouchableOpacity style={styles.mainButton} onPress={handleAuth} disabled={loading}>
               {loading ? <ActivityIndicator color="#D4AF37" /> : <ThemedText style={styles.buttonLabel}>{isLogin ? 'ENTRAR' : 'CADASTRAR'}</ThemedText>}
             </TouchableOpacity>
 
-            {/* BOTÃO GOOGLE */}
-            <TouchableOpacity style={styles.googleButton} onPress={handleGoogleLogin}>
+            <TouchableOpacity 
+              style={styles.googleButton} 
+              onPress={() => promptAsync()} 
+              disabled={!request || loading}
+            >
               <Ionicons name="logo-google" size={20} color="#ea4335" />
               <ThemedText style={styles.googleButtonLabel}>Entrar com Google</ThemedText>
             </TouchableOpacity>
@@ -175,18 +175,18 @@ const styles = StyleSheet.create({
   scrollContainer: { flexGrow: 1 },
   container: { flex: 1, backgroundColor: '#13966ecb', padding: 30, justifyContent: 'center' },
   header: { alignItems: 'center', marginBottom: 35 },
-  mainTitle: { fontSize: 34, fontWeight: '900', color: '#FFD700', marginTop: 10, textShadowColor: 'rgba(0,0,0,0.3)', textShadowOffset: {width: 1, height: 1}, textShadowRadius: 2 },
-  subtitle: { fontSize: 14, color: '#fff', opacity: 0.8, letterSpacing: 1 },
+  mainTitle: { fontSize: 34, fontWeight: '900', color: '#FFD700', marginTop: 10 },
+  subtitle: { fontSize: 14, color: '#fff', opacity: 0.8 },
   tabBar: { flexDirection: 'row', marginBottom: 25, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.2)', padding: 4 },
   tabBtn: { flex: 1, paddingVertical: 14, alignItems: 'center', borderRadius: 10 },
   activeTabBtn: { backgroundColor: '#fff' },
   activeText: { fontWeight: 'bold', color: '#D4AF37' },
   inputArea: { gap: 12 },
   inputBox: { flexDirection: 'row', alignItems: 'center', borderRadius: 14, paddingHorizontal: 15, height: 60, backgroundColor: '#fff' },
-  inputField: { flex: 1, marginLeft: 12, fontSize: 16, color: '#212529' },
+  inputField: { flex: 1, marginLeft: 12, fontSize: 16 },
   mainButton: { backgroundColor: '#fff', height: 60, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginTop: 15 },
   buttonLabel: { color: '#D4AF37', fontWeight: 'bold', fontSize: 16 },
-  googleButton: { flexDirection: 'row', backgroundColor: '#fff', height: 50, borderRadius: 14, alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 10 },
+  googleButton: { flexDirection: 'row', backgroundColor: '#fff', height: 50, borderRadius: 14, alignItems: 'center', justifyContent: 'center', gap: 10 },
   googleButtonLabel: { color: '#555', fontWeight: '600' },
   legDayAlert: { marginTop: 40, alignSelf: 'center', backgroundColor: '#d00000', paddingHorizontal: 20, paddingVertical: 8, borderRadius: 50 },
   legDayText: { color: '#fff', fontWeight: 'bold', fontSize: 11 }
