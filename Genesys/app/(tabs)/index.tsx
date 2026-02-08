@@ -1,0 +1,193 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  StyleSheet, TextInput, TouchableOpacity, View, 
+  ActivityIndicator, Alert, ScrollView, KeyboardAvoidingView, Platform 
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+
+// Firebase Engine
+import { initializeApp, getApps } from "firebase/app";
+import { 
+  initializeAuth,  
+  createUserWithEmailAndPassword,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  updateProfile,
+  signInWithPopup,
+  GoogleAuthProvider,
+  // @ts-ignore
+  getReactNativePersistence 
+} from "firebase/auth";
+
+// Persistência para mobile
+import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCfTamd-cCerKdXxsl1SrOqKKKz5gf7qek",
+  authDomain: "biosyntech-fe492.firebaseapp.com",
+  projectId: "biosyntech-fe492",
+  storageBucket: "biosyntech-fe492.firebasestorage.app",
+  messagingSenderId: "731720654700",
+  appId: "1:731720654700:web:40ecd6b5304b0cd1171d49"
+};
+
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+const auth = initializeAuth(app, { 
+  // @ts-ignore
+  persistence: getReactNativePersistence(ReactNativeAsyncStorage)
+});
+
+export default function LoginScreen() {
+  const router = useRouter();
+  const [isLogin, setIsLogin] = useState(true);
+  const [loading, setLoading] = useState(false);
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  // LÓGICA DE MONITORAMENTO (onAuthStateChanged)
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        console.log("Usuário autenticado:", user.email);
+        router.replace('/(tabs)'); 
+      }
+    });
+    return unsubscribe;
+  }, []);
+
+  // LOGIN COM E-MAIL OU CADASTRO
+  const handleAuth = async () => {
+    if (!email || !password) {
+      Alert.alert("Atenção", "Preencha e-mail e senha.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      if (isLogin) {
+        await signInWithEmailAndPassword(auth, email, password);
+      } else {
+        if (password !== confirmPassword) {
+          Alert.alert("Erro", "As senhas não coincidem.");
+          return;
+        }
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(userCredential.user, { displayName: username });
+      }
+    } catch (error: any) {
+      Alert.alert("Erro GenesysFit", error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // LOGIN COM GOOGLE
+  const handleGoogleLogin = async () => {
+    const provider = new GoogleAuthProvider();
+    setLoading(true);
+    try {
+      // Nota: No mobile nativo real, usa-se expo-auth-session. 
+      // O signInWithPopup funciona aqui se você estiver testando no Navegador (Expo Web).
+      await signInWithPopup(auth, provider);
+    } catch (error: any) {
+      Alert.alert("Google Login", "Certifique-se de que o login via popup está habilitado.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+        <ThemedView style={styles.container}>
+          
+          <View style={styles.header}>
+            <Ionicons name="fitness" size={70} color="#FFD700" />
+            <ThemedText type="title" style={styles.mainTitle}>GenesysFitSys</ThemedText>
+            <ThemedText style={styles.subtitle}>Sua evolução começa aqui.</ThemedText>
+          </View>
+
+          <View style={styles.tabBar}>
+            <TouchableOpacity style={[styles.tabBtn, isLogin && styles.activeTabBtn]} onPress={() => setIsLogin(true)}>
+              <ThemedText style={styles.activeText}>LOGIN</ThemedText>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.tabBtn, !isLogin && styles.activeTabBtn]} onPress={() => setIsLogin(false)}>
+              <ThemedText style={styles.activeText}>CRIAR CONTA</ThemedText>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.inputArea}>
+            {!isLogin && (
+              <View style={styles.inputBox}>
+                <Ionicons name="person-outline" size={20} color="#D4AF37" />
+                <TextInput placeholder="Nome de Usuário" style={styles.inputField} value={username} onChangeText={setUsername} />
+              </View>
+            )}
+
+            <View style={styles.inputBox}>
+              <Ionicons name="mail-outline" size={20} color="#D4AF37" />
+              <TextInput placeholder="E-mail" style={styles.inputField} keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} />
+            </View>
+
+            <View style={styles.inputBox}>
+              <Ionicons name="lock-closed-outline" size={20} color="#D4AF37" />
+              <TextInput placeholder="Senha" style={styles.inputField} secureTextEntry value={password} onChangeText={setPassword} />
+            </View>
+          {!isLogin && (
+            <View style={styles.inputBox}>
+                <Ionicons name="shield-checkmark-outline" size={20} color="#D4AF37" />
+                <TextInput 
+                  placeholder="Confirmar Senha" 
+                  style={styles.inputField} 
+                  secureTextEntry 
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                />
+            </View>
+            )}
+            <TouchableOpacity style={styles.mainButton} onPress={handleAuth} disabled={loading}>
+              {loading ? <ActivityIndicator color="#D4AF37" /> : <ThemedText style={styles.buttonLabel}>{isLogin ? 'ENTRAR' : 'CADASTRAR'}</ThemedText>}
+            </TouchableOpacity>
+
+            {/* BOTÃO GOOGLE */}
+            <TouchableOpacity style={styles.googleButton} onPress={handleGoogleLogin}>
+              <Ionicons name="logo-google" size={20} color="#ea4335" />
+              <ThemedText style={styles.googleButtonLabel}>Entrar com Google</ThemedText>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.legDayAlert}>
+             <ThemedText style={styles.legDayText}>🔥 PULO LEG DAY 😡</ThemedText>
+          </View>
+        </ThemedView>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+}
+
+const styles = StyleSheet.create({
+  scrollContainer: { flexGrow: 1 },
+  container: { flex: 1, backgroundColor: '#13966ecb', padding: 30, justifyContent: 'center' },
+  header: { alignItems: 'center', marginBottom: 35 },
+  mainTitle: { fontSize: 34, fontWeight: '900', color: '#FFD700', marginTop: 10, textShadowColor: 'rgba(0,0,0,0.3)', textShadowOffset: {width: 1, height: 1}, textShadowRadius: 2 },
+  subtitle: { fontSize: 14, color: '#fff', opacity: 0.8, letterSpacing: 1 },
+  tabBar: { flexDirection: 'row', marginBottom: 25, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.2)', padding: 4 },
+  tabBtn: { flex: 1, paddingVertical: 14, alignItems: 'center', borderRadius: 10 },
+  activeTabBtn: { backgroundColor: '#fff' },
+  activeText: { fontWeight: 'bold', color: '#D4AF37' },
+  inputArea: { gap: 12 },
+  inputBox: { flexDirection: 'row', alignItems: 'center', borderRadius: 14, paddingHorizontal: 15, height: 60, backgroundColor: '#fff' },
+  inputField: { flex: 1, marginLeft: 12, fontSize: 16, color: '#212529' },
+  mainButton: { backgroundColor: '#fff', height: 60, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginTop: 15 },
+  buttonLabel: { color: '#D4AF37', fontWeight: 'bold', fontSize: 16 },
+  googleButton: { flexDirection: 'row', backgroundColor: '#fff', height: 50, borderRadius: 14, alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 10 },
+  googleButtonLabel: { color: '#555', fontWeight: '600' },
+  legDayAlert: { marginTop: 40, alignSelf: 'center', backgroundColor: '#d00000', paddingHorizontal: 20, paddingVertical: 8, borderRadius: 50 },
+  legDayText: { color: '#fff', fontWeight: 'bold', fontSize: 11 }
+});

@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "642421745104",
+    "project_id": "biosyntech-8ffe1",
+    "storage_bucket": "biosyntech-8ffe1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:642421745104:android:4dd6cec67f2bde3af145d5",
+        "android_client_info": {
+          "package_name": "com.genesys.fitsys"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "642421745104-dumta3ri29l1spsj7ikrlqfuqu922m2k.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.genesys.fitsys",
+            "certificate_hash": "93d4152c703dd1ac0d88e4b77d70d23e047adbe0"
+          }
+        },
+        {
+          "client_id": "642421745104-5b5lhva0c32t6rfl72elovp71ojcl432.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCgu2iRC-t4XHUUwsw2kbwMkB9rgbBc6XE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "642421745104-5b5lhva0c32t6rfl72elovp71ojcl432.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
