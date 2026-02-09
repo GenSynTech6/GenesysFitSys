@@ -6,8 +6,9 @@ import {
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
-// Firebase
+// Firebase Engine
 import { initializeApp, getApps, getApp } from "firebase/app";
+import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
 import { 
   getAuth, 
   initializeAuth,
@@ -22,7 +23,7 @@ import {
 } from "firebase/auth";
 import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 
-// Google Login Nativo
+// Google Login
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 
@@ -40,8 +41,8 @@ const firebaseConfig = {
   appId: "1:642421745104:web:ef5298a181d4a178f145d5"
 };
 
-// Inicialização "Blindada" contra erros de módulo e re-inicialização
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+const db = getFirestore(app);
 let auth: any;
 try {
   auth = initializeAuth(app, {
@@ -60,27 +61,7 @@ export default function LoginScreen() {
   const [username, setUsername] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  // Configuração do Google
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    androidClientId: "642421745104-dumta3ri29l1spsj7ikrlqfuqu922m2k.apps.googleusercontent.com", // Você pega isso no console do Google Cloud
-    iosClientId: "731720654700-vossos-ids.apps.googleusercontent.com",
-    webClientId: "642421745104-5b5lhva0c32t6rfl72elovp71ojcl432.apps.googleusercontent.com",
-  },{
-    useProxy: true, // Importante para funcionar no Expo Go
-  }
-);
-
-  useEffect(() => {
-    if (response?.type === 'success') {
-      const { id_token } = response.params;
-      const credential = GoogleAuthProvider.credential(id_token);
-      setLoading(true);
-      signInWithCredential(auth, credential)
-        .catch(err => Alert.alert("Erro Google", err.message))
-        .finally(() => setLoading(false));
-    }
-  }, [response]);
-
+  // 1. MONITOR DE ESTADO
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) router.replace('/(tabs)'); 
@@ -88,27 +69,114 @@ export default function LoginScreen() {
     return unsubscribe;
   }, []);
 
-  const handleAuth = async () => {
-    if (!email || !password) return Alert.alert("Atenção", "Preencha tudo!");
+  // 2. CONFIGURAÇÃO GOOGLE
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    androidClientId: "642421745104-dumta3ri29l1spsj7ikrlqfuqu922m2k.apps.googleusercontent.com",
+    webClientId: "642421745104-5b5lhva0c32t6rfl72elovp71ojcl432.apps.googleusercontent.com",
+  });
+
+useEffect(() => {
+  if (response?.type === 'success' && response.authentication) {
+    // O segredo está em usar o idToken para criar a credencial do Firebase
+    const { idToken } = response.authentication; 
+
+    if (idToken) {
+      setLoading(true);
+      const credential = GoogleAuthProvider.credential(idToken);
+      
+      signInWithCredential(auth, credential)
+        .then(() => console.log("Logado com sucesso!"))
+        .catch((error) => {
+          console.error("Erro detalhado:", error.code, error.message);
+          Alert.alert("Erro de Credencial", "O Firebase não aceitou o token. Verifique o WebClientID no console.");
+        })
+        .finally(() => setLoading(false));
+    }
+  }
+}, [response]);
+
+  const handleSocialLogin = async (credential: any) => {
     setLoading(true);
     try {
-      if (isLogin) {
-        await signInWithEmailAndPassword(auth, email, password);
-      } else {
-        if (password !== confirmPassword) throw new Error("Senhas não batem");
-        const userCr = await createUserWithEmailAndPassword(auth, email, password);
-        await updateProfile(userCr.user, { displayName: username });
+      const result = await signInWithCredential(auth, credential);
+      // Verifica se o documento do user existe, se não, cria (Gamificação)
+      const userDoc = await getDoc(doc(db, "users", result.user.uid));
+      if (!userDoc.exists()) {
+        await createUserData(result.user.uid, result.user.displayName || "Guerreiro", result.user.email || "");
       }
     } catch (error: any) {
-      Alert.alert("Erro GenesysFit", error.message);
+      Alert.alert("Erro Google", error.message);
     } finally {
       setLoading(false);
     }
   };
 
+  // 3. FUNÇÃO PARA CRIAR DADOS NO FIRESTORE
+  const createUserData = async (uid: string, name: string, mail: string) => {
+    await setDoc(doc(db, "users", uid), {
+      username: name,
+      email: mail,
+      peso: 0,
+      altura: 0,
+      level: 1,
+      xp: 0,
+      moedas: 0,
+      streak: 0,
+      createdAt: new Date().toISOString()
+    });
+  };
+
+  // 4. HANDLER LOGIN/CADASTRO E-MAIL
+const handleAuth = async () => {
+  const cleanEmail = email.trim();
+  const cleanPassword = password.trim();
+
+  // 1. Validação básica
+  if (!cleanEmail || !cleanPassword) {
+    return Alert.alert("Erro", "Preencha e-mail e senha.");
+  }
+
+  setLoading(true);
+
+  try {
+    if (isLogin) {
+      // --- LÓGICA DE LOGIN ---
+      await signInWithEmailAndPassword(auth, cleanEmail, cleanPassword);
+      console.log("Login realizado!");
+    } else {
+      // --- LÓGICA DE CADASTRO ---
+      if (!username) {
+        setLoading(false);
+        return Alert.alert("Erro", "Informe seu nome para o cadastro.");
+      }
+      if (cleanPassword !== confirmPassword) {
+        setLoading(false);
+        return Alert.alert("Erro", "As senhas não coincidem.");
+      }
+
+      // Criamos o usuário no Auth
+      const userCredential = await createUserWithEmailAndPassword(auth, cleanEmail, cleanPassword);
+      const user = userCredential.user;
+
+      // Atualizamos o nome no perfil do Firebase Auth
+      await updateProfile(user, { displayName: username });
+
+      // Chamamos a sua função auxiliar para criar o perfil no Firestore
+      // Isso evita o erro de 'userCr is not defined'
+      await createUserData(user.uid, username, cleanEmail);
+      
+      console.log("Usuário e Perfil Firestore criados com sucesso!");
+    }
+  } catch (error: any) {
+    console.error(error);
+    Alert.alert("GenesysFit", error.message);
+  } finally {
+    setLoading(false);
+  }
+};''
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
         <ThemedView style={styles.container}>
           
           <View style={styles.header}>
@@ -119,10 +187,10 @@ export default function LoginScreen() {
 
           <View style={styles.tabBar}>
             <TouchableOpacity style={[styles.tabBtn, isLogin && styles.activeTabBtn]} onPress={() => setIsLogin(true)}>
-              <ThemedText style={styles.activeText}>LOGIN</ThemedText>
+              <ThemedText style={[styles.tabText, isLogin && styles.activeTabText]}>LOGIN</ThemedText>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.tabBtn, !isLogin && styles.activeTabBtn]} onPress={() => setIsLogin(false)}>
-              <ThemedText style={styles.activeText}>CRIAR CONTA</ThemedText>
+              <ThemedText style={[styles.tabText, !isLogin && styles.activeTabText]}>CADASTRO</ThemedText>
             </TouchableOpacity>
           </View>
 
@@ -135,7 +203,7 @@ export default function LoginScreen() {
             )}
             <View style={styles.inputBox}>
               <Ionicons name="mail-outline" size={20} color="#D4AF37" />
-              <TextInput placeholder="E-mail" style={styles.inputField} autoCapitalize="none" value={email} onChangeText={setEmail} />
+              <TextInput placeholder="E-mail" style={styles.inputField} keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} />
             </View>
             <View style={styles.inputBox}>
               <Ionicons name="lock-closed-outline" size={20} color="#D4AF37" />
@@ -149,21 +217,13 @@ export default function LoginScreen() {
             )}
 
             <TouchableOpacity style={styles.mainButton} onPress={handleAuth} disabled={loading}>
-              {loading ? <ActivityIndicator color="#D4AF37" /> : <ThemedText style={styles.buttonLabel}>{isLogin ? 'ENTRAR' : 'CADASTRAR'}</ThemedText>}
+              {loading ? <ActivityIndicator color="#122620" /> : <ThemedText style={styles.buttonLabel}>{isLogin ? 'ENTRAR' : 'COMEÇAR JORNADA'}</ThemedText>}
             </TouchableOpacity>
 
-            <TouchableOpacity 
-              style={styles.googleButton} 
-              onPress={() => promptAsync()} 
-              disabled={!request || loading}
-            >
+            <TouchableOpacity style={styles.googleButton} onPress={() => promptAsync()} disabled={!request || loading}>
               <Ionicons name="logo-google" size={20} color="#ea4335" />
-              <ThemedText style={styles.googleButtonLabel}>Entrar com Google</ThemedText>
+              <ThemedText style={styles.googleButtonLabel}>Google Sign In</ThemedText>
             </TouchableOpacity>
-          </View>
-
-          <View style={styles.legDayAlert}>
-             <ThemedText style={styles.legDayText}>🔥 PULO LEG DAY 😡</ThemedText>
           </View>
         </ThemedView>
       </ScrollView>
@@ -173,21 +233,20 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   scrollContainer: { flexGrow: 1 },
-  container: { flex: 1, backgroundColor: '#13966ecb', padding: 30, justifyContent: 'center' },
+  container: { flex: 1, backgroundColor: '#122620', padding: 30, justifyContent: 'center' },
   header: { alignItems: 'center', marginBottom: 35 },
   mainTitle: { fontSize: 34, fontWeight: '900', color: '#FFD700', marginTop: 10 },
   subtitle: { fontSize: 14, color: '#fff', opacity: 0.8 },
-  tabBar: { flexDirection: 'row', marginBottom: 25, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.2)', padding: 4 },
+  tabBar: { flexDirection: 'row', marginBottom: 25, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.1)', padding: 4 },
   tabBtn: { flex: 1, paddingVertical: 14, alignItems: 'center', borderRadius: 10 },
-  activeTabBtn: { backgroundColor: '#fff' },
-  activeText: { fontWeight: 'bold', color: '#D4AF37' },
+  activeTabBtn: { backgroundColor: '#FFD700' },
+  tabText: { fontWeight: 'bold', color: '#fff' },
+  activeTabText: { color: '#122620' },
   inputArea: { gap: 12 },
   inputBox: { flexDirection: 'row', alignItems: 'center', borderRadius: 14, paddingHorizontal: 15, height: 60, backgroundColor: '#fff' },
-  inputField: { flex: 1, marginLeft: 12, fontSize: 16 },
-  mainButton: { backgroundColor: '#fff', height: 60, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginTop: 15 },
-  buttonLabel: { color: '#D4AF37', fontWeight: 'bold', fontSize: 16 },
+  inputField: { flex: 1, marginLeft: 12, fontSize: 16, color: '#000' },
+  mainButton: { backgroundColor: '#FFD700', height: 60, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginTop: 15 },
+  buttonLabel: { color: '#122620', fontWeight: 'bold', fontSize: 16 },
   googleButton: { flexDirection: 'row', backgroundColor: '#fff', height: 50, borderRadius: 14, alignItems: 'center', justifyContent: 'center', gap: 10 },
   googleButtonLabel: { color: '#555', fontWeight: '600' },
-  legDayAlert: { marginTop: 40, alignSelf: 'center', backgroundColor: '#d00000', paddingHorizontal: 20, paddingVertical: 8, borderRadius: 50 },
-  legDayText: { color: '#fff', fontWeight: 'bold', fontSize: 11 }
 });

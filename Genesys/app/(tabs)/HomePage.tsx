@@ -1,82 +1,122 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, TouchableOpacity, ScrollView, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
+import { StyleSheet, View, ScrollView, TouchableOpacity, Modal, TextInput, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { signOut, onAuthStateChanged } from 'firebase/auth';
+import { getAuth } from "firebase/auth";
+import { getFirestore, doc, onSnapshot, updateDoc, increment } from "firebase/firestore";
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { initializeApp, getApps } from 'firebase/app';
-import { initializeAuth } from 'firebase/auth';
-
-const firebaseConfig = {
-  apiKey: "AIzaSyCfTamd-cCerKdXxsl1SrOqKKKz5gf7qek",
-  authDomain: "biosyntech-fe492.firebaseapp.com",
-  projectId: "biosyntech-fe492",
-  storageBucket: "biosyntech-fe492.firebasestorage.app",
-  messagingSenderId: "731720654700",
-  appId: "1:731720654700:web:40ecd6b5304b0cd1171d49"
-};
-
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-const auth = initializeAuth(app, {});
 
 export default function HomePage() {
-  const router = useRouter();
-  const [userName, setUserName] = useState('');
+  const auth = getAuth();
+  const db = getFirestore();
+  const [userData, setUserData] = useState<any>(null);
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [peso, setPeso] = useState('');
+  const [altura, setAltura] = useState('');
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setUserName(user.displayName || user.email || 'Usuário');
-      } else {
-        router.replace('/');
-      }
-    });
-    return unsubscribe;
-  }, [router]);
+    if (auth.currentUser) {
+      const unsub = onSnapshot(doc(db, "users", auth.currentUser.uid), (doc) => {
+        const data = doc.data();
+        setUserData(data);
+        // Se peso ou altura forem 0, mostra o modal de boas-vindas
+        if (data && (data.peso === 0 || data.altura === 0)) {
+          setShowWelcome(true);
+        }
+      });
+      return () => unsub();
+    }
+  }, []);
 
-  const handleLogout = async () => {
+  const handleFirstUpdate = async () => {
+    if (!peso || !altura) return Alert.alert("Ops!", "Preencha os dados para ganhar seu XP!");
+    
+    setSaving(true);
     try {
-      await signOut(auth);
-      router.replace('/');
+      const userRef = doc(db, "users", auth.currentUser!.uid);
+      await updateDoc(userRef, {
+        peso: parseFloat(peso.replace(',', '.')),
+        altura: parseFloat(altura.replace(',', '.')),
+        xp: increment(50), // Recompensa!
+        moedas: increment(10)
+      });
+      setShowWelcome(false);
+      Alert.alert("Evolução!", "Você ganhou 50 XP e 10 Moedas por iniciar sua jornada!");
     } catch (error) {
-      Alert.alert('Erro', 'Erro ao deslogar. Tente novamente.');
-      console.error('Erro ao deslogar:', error);
+      Alert.alert("Erro", "Não foi possível salvar seus dados.");
+    } finally {
+      setSaving(false);
     }
   };
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <Ionicons name="fitness" size={60} color="#FFD700" />
-          <ThemedText type="title" style={styles.title}>Bem-vindo!</ThemedText>
-          <ThemedText style={styles.userName}>{userName}</ThemedText>
-          <ThemedText style={styles.subtitle}>GenesysFitSys</ThemedText>
-        </View>
-
-        <View style={styles.content}>
-          <ThemedText style={styles.welcomeText}>Sua jornada fitness começa agora 💪</ThemedText>
-        </View>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        {/* ... (Todo o seu Header e Barra de XP que fizemos antes) ... */}
+        <ThemedText type="title" style={styles.levelTitle}>Nível {userData?.level || 1}</ThemedText>
+        <ThemedText style={{color: '#fff'}}>XP: {userData?.xp || 0}</ThemedText>
       </ScrollView>
 
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Ionicons name="log-out-outline" size={20} color="#fff" />
-        <ThemedText style={styles.logoutText}>Sair</ThemedText>
-      </TouchableOpacity>
+      {/* MODAL DE BOAS-VINDAS GAMIFICADO */}
+      <Modal visible={showWelcome} animationType="slide" transparent={true}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Ionicons name="trophy" size={60} color="#FFD700" />
+            <ThemedText style={styles.modalTitle}>Bem-vindo ao GenesysFit!</ThemedText>
+            <ThemedText style={styles.modalSub}>Complete seu perfil para ganhar recompensas.</ThemedText>
+
+            <View style={styles.inputRow}>
+              <View style={styles.inputGroup}>
+                <ThemedText style={styles.label}>Peso (kg)</ThemedText>
+                <TextInput 
+                  style={styles.input} 
+                  placeholder="80.5" 
+                  placeholderTextColor="#666"
+                  keyboardType="numeric"
+                  value={peso}
+                  onChangeText={setPeso}
+                />
+              </View>
+              <View style={styles.inputGroup}>
+                <ThemedText style={styles.label}>Altura (m)</ThemedText>
+                <TextInput 
+                  style={styles.input} 
+                  placeholder="1.75" 
+                  placeholderTextColor="#666"
+                  keyboardType="numeric"
+                  value={altura}
+                  onChangeText={setAltura}
+                />
+              </View>
+            </View>
+
+            <TouchableOpacity style={styles.saveButton} onPress={handleFirstUpdate} disabled={saving}>
+              {saving ? <ActivityIndicator color="#122620" /> : (
+                <ThemedText style={styles.saveButtonText}>RESGATAR 50 XP 🚀</ThemedText>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#13966ecb', padding: 20 },
-  scrollContent: { flexGrow: 1, justifyContent: 'center' },
-  header: { alignItems: 'center', marginBottom: 40 },
-  title: { fontSize: 32, fontWeight: '900', color: '#FFD700', marginBottom: 10 },
-  userName: { fontSize: 18, color: '#fff', marginBottom: 5 },
-  subtitle: { fontSize: 16, color: '#fff', opacity: 0.8 },
-  content: { alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.1)', padding: 20, borderRadius: 14 },
-  welcomeText: { fontSize: 18, color: '#fff', textAlign: 'center' },
-  logoutButton: { flexDirection: 'row', backgroundColor: '#d00000', height: 50, borderRadius: 14, alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 20 },
-  logoutText: { color: '#fff', fontWeight: 'bold', fontSize: 16 }
+  container: { flex: 1, backgroundColor: '#0F172A' },
+  scrollContent: { padding: 25, paddingTop: 60 },
+  levelTitle: { color: '#FFD700', fontSize: 32, fontWeight: '900' },
+  
+  // Estilos do Modal
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', padding: 20 },
+  modalContent: { backgroundColor: '#1E293B', borderRadius: 30, padding: 30, alignItems: 'center', borderWidth: 1, borderColor: '#FFD700' },
+  modalTitle: { fontSize: 22, fontWeight: 'bold', color: '#fff', marginTop: 15, textAlign: 'center' },
+  modalSub: { fontSize: 14, color: '#94A3B8', textAlign: 'center', marginBottom: 25 },
+  inputRow: { flexDirection: 'row', gap: 15, marginBottom: 30 },
+  inputGroup: { flex: 1 },
+  label: { color: '#FFD700', fontSize: 12, marginBottom: 5, fontWeight: 'bold' },
+  input: { backgroundColor: '#0F172A', color: '#fff', padding: 15, borderRadius: 12, fontSize: 18, textAlign: 'center' },
+  saveButton: { backgroundColor: '#FFD700', paddingVertical: 18, paddingHorizontal: 30, borderRadius: 15, width: '100%', alignItems: 'center' },
+  saveButtonText: { color: '#122620', fontWeight: 'bold', fontSize: 16 }
 });

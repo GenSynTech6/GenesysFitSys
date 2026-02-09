@@ -30,7 +30,7 @@ export default function RootLayout() {
 
   if (isAuthenticated === null) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#13966ecb' }}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#122620' }}>
         <ActivityIndicator size="large" color="#FFD700" />
       </View>
     );
