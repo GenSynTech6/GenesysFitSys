@@ -10,8 +10,26 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { gerarTreinoIA } from '../../services/gemini';
 import { DrawerMenu } from '@/components/drawer-menu';
 
-
 const { width } = Dimensions.get('window');
+
+// Sistema de Ranks baseado em Nível
+const RANK_SYSTEM = [
+  { min: 1, max: 5, name: "Aprendiz" },
+  { min: 6, max: 10, name: "Rank E" },
+  { min: 11, max: 20, name: "Rank D" },
+  { min: 21, max: 35, name: "Rank C" },
+  { min: 41, max: 45, name: "Rank B" },
+  { min: 46, max: 55, name: "Rank A" },
+  { min: 56, max: 70, name: "Rank S" },
+  { min: 71, max: 85, name: "Rank S Internacional" },
+  { min: 86, max: 100, name: "Monarca" },
+  { min: 101, max: 9999, name: "ERROR" },
+];
+
+const getRank = (nivel: number): string => {
+  const rank = RANK_SYSTEM.find(r => nivel >= r.min && nivel <= r.max);
+  return rank?.name || 'Desconhecido';
+};
 
 export default function HomePage() {
   const auth = getAuth();
@@ -76,11 +94,13 @@ export default function HomePage() {
 
   const handleLevelUp = async (currentLevel: number) => {
     const userRef = doc(db, "users", auth.currentUser!.uid);
+    const newLevel = currentLevel + 1;
     await updateDoc(userRef, {
-      level: increment(1),
-      xp: 0 // Reseta o XP ao subir de nível
+      level: newLevel,
+      xp: 0,
+      rank: getRank(newLevel)
     });
-    Alert.alert("LEVEL UP! 🎊", `Você atingiu o nível ${currentLevel + 1}!`);
+    Alert.alert("LEVEL UP! 🎊", `Você atingiu o nível ${newLevel}! Novo Rank: ${getRank(newLevel)}`);
   };
 
   const handleLogout = () => {
@@ -163,6 +183,7 @@ export default function HomePage() {
         <View style={styles.levelCard}>
           <View style={styles.levelHeader}>
             <ThemedText style={styles.levelLabel}>NÍVEL {userData?.level || 1}</ThemedText>
+            <ThemedText style={styles.levelLabel}>Rank: {userData?.rank || getRank(userData?.level || 0)}</ThemedText>
             <ThemedText style={styles.xpLabel}>{userData?.xp || 0} / {xpLimite} XP</ThemedText>
           </View>
           <View style={styles.xpBarBackground}>

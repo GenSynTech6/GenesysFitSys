@@ -123,6 +123,7 @@ useEffect(() => {
       xp: 0,
       moedas: 0,
       streak: 0,
+      rank: "Aprendiz",
       createdAt: new Date().toISOString()
     });
   };

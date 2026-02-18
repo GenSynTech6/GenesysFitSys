@@ -49,8 +49,10 @@ export default function ShopScreen() {
           <TouchableOpacity onPress={() => setShowDrawer(true)}>
             <Ionicons name="menu" size={28} color="#FFD700" />
           </TouchableOpacity>
-          <Ionicons name="cart" size={120} color="#FFD700" />
-          <ThemedText style={styles.headerTitle}>MERCADO GENESYS</ThemedText>
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+            <Ionicons name="cart" size={120} color="#FFD700" />
+            <ThemedText style={styles.headerTitle}>MERCADO GENESYS</ThemedText>
+          </View>
         </View>
       }>
 
@@ -91,9 +93,11 @@ export default function ShopScreen() {
 const styles = StyleSheet.create({
   headerContainer: {
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     height: '100%',
     backgroundColor: '#020617',
+    flexDirection: 'row',
+    
   },
   headerTitle: {
     color: '#FFD700',
