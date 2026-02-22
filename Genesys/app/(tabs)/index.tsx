@@ -81,6 +81,25 @@ export default function HomePage() {
     }
   }, []);
 
+
+  // Lógica para validar ofensiva (Chame isso ao carregar o app)
+  const checkStreak = async (userData: any) => {
+    const hoje = new Date().toISOString().split('T')[0];
+    const ultimaData = userData.lastWorkoutDate;
+
+    if (!ultimaData) return;
+
+    const diffInDays = Math.floor((new Date(hoje).getTime() - new Date(ultimaData).getTime()) / (1000 * 60 * 60 * 24));
+
+    if (diffInDays > 1) {
+      // Perdeu a ofensiva!
+      if (auth.currentUser) {
+        await updateDoc(doc(db, "users", auth.currentUser.uid), { streak: 0 });
+      }
+    }
+  };
+
+
   // Cronômetro do Treino
   useEffect(() => {
     let interval: any;

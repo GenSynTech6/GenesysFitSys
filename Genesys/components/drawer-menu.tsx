@@ -51,6 +51,7 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
   const menuItems = [
     { label: 'Início', icon: 'home', route: '/(tabs)', emoji: '🏠' },
     { label: 'Treinos', icon: 'dumbbell', route: '/(tabs)/treinos', emoji: '🏋️' },
+    { label: 'Ranking', icon: 'trophy', route: '/(tabs)/Ranking', emoji: '👑' },
     { label: 'Cronômetro', icon: 'timer', route: '/(tabs)/cronometro', emoji: '⏱️' },
     { label: 'Dieta', icon: 'nutrition', route: '/(tabs)/dieta', emoji: '🥗' },
     { label: 'Gamificação', icon: 'trophy', route: '/(tabs)/gamificacao', emoji: '🎮' },

@@ -1,24 +1,20 @@
 import React, { useState, useEffect } from "react"; 
-import {  TouchableOpacity } from "react-native";
-import { Button, StyleSheet, Text, View, Pressable } from "react-native";
-import { useRouter } from "expo-router";
-import { useThemeColor } from "@/hooks/use-theme-color";
+import { TouchableOpacity, StyleSheet, Text, View, Pressable, SafeAreaView } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerMenu } from '@/components/drawer-menu';
+import { Colors } from "../../constants/colors"; // Verifique se o caminho está correto
 
 export default function CronometroScreen() {
-  const router = useRouter();
   const [tempo, setTempo] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [showDrawer, setShowDrawer] = useState(false);
-  const textColor = useThemeColor({}, "text");
-  const accentColor = useThemeColor({}, "tint");
 
   useEffect(() => {
-    let intervalo: NodeJS.Timeout;
+    let intervalo: ReturnType<typeof setInterval>;
     if (isRunning) {
-      //@ts-ignore
-      intervalo = setInterval(() => setTempo((t) => t + 1), 1000);
+      intervalo = setInterval(() => {
+        setTempo((t) => t + 1);
+      }, 1000);
     }
     return () => {
       if (intervalo) clearInterval(intervalo);
@@ -31,99 +27,131 @@ export default function CronometroScreen() {
     return `${String(mins).padStart(2, "0")}:${String(segs).padStart(2, "0")}`;
   };
 
-  const iniciar = () => setIsRunning(true);
-  const parar = () => setIsRunning(false);
   const resetar = () => {
     setIsRunning(false);
     setTempo(0);
   };
 
   return (
-    <View style={styles.container}>
-          <TouchableOpacity onPress={() => setShowDrawer(true)}>
-            <Ionicons name="menu" size={28} color="#FFD700" />
-          </TouchableOpacity>
-      
-      <Text style={[styles.title, { color: accentColor }]}>⏱️ Cronômetro</Text>
-      <Text style={[styles.timer, { color: accentColor }]}>{formatarTempo(tempo)}</Text>
+    <SafeAreaView style={styles.container}>
+      {/* Cabeçalho */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => setShowDrawer(true)} style={styles.menuIcon}>
+          <Ionicons name="menu" size={32} color="#FFD700" />
+        </TouchableOpacity>
+      </View>
+
+      <Text style={styles.title}>⏱️ Cronômetro</Text>
+
+      {/* Círculo do Cronômetro */}
+      <View style={styles.timerCircle}>
+        <Text style={styles.timer}>{formatarTempo(tempo)}</Text>
+        <Text style={styles.label}>{isRunning ? "FOCO NO TREINO!" : "DESCANSO"}</Text>
+      </View>
       
       <View style={styles.buttonContainer}>
         <Pressable
-          style={[styles.button, isRunning && styles.buttonDisabled]}
-          onPress={iniciar}
-          disabled={isRunning}
+          style={[styles.button, isRunning ? styles.btnParar : styles.btnIniciar]}
+          onPress={() => setIsRunning(!isRunning)}
         >
-          <Text style={styles.buttonText}>Iniciar</Text>
+          <Ionicons name={isRunning ? "pause" : "play"} size={24} color="#0d0d0d" />
+          <Text style={styles.buttonText}>{isRunning ? "Parar" : "Iniciar"}</Text>
         </Pressable>
         
-        <Pressable
-          style={[styles.button, !isRunning && styles.buttonDisabled]}
-          onPress={parar}
-          disabled={!isRunning}
-        >
-          <Text style={styles.buttonText}>Parar</Text>
-        </Pressable>
-        
-        <Pressable style={styles.button} onPress={resetar}>
-          <Text style={styles.buttonText}>Resetar</Text>
+        <Pressable style={[styles.button, styles.btnReset]} onPress={resetar}>
+          <Ionicons name="refresh" size={24} color="#FFD700" />
+          <Text style={[styles.buttonText, { color: "#FFD700" }]}>Resetar</Text>
         </Pressable>
       </View>
-    </View>
+
+      <DrawerMenu visible={showDrawer} onClose={() => setShowDrawer(false)} />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#072018",
+    backgroundColor: Colors.charcoal, // Fundo Obsidian
     alignItems: "center",
-    justifyContent: "center",
-    padding: 20,
+    paddingTop: 50,
   },
-  backButton: {
-    position: "absolute",
-    top: 16,
-    left: 16,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    backgroundColor: "#e8a322",
+  header: {
+    width: '100%',
+    paddingHorizontal: 20,
+    alignItems: 'flex-start',
   },
-  backButtonText: {
-    color: "#0d0d0d",
-    fontWeight: "600",
-    fontSize: 14,
+  menuIcon: {
+    padding: 10,
   },
   title: {
     fontSize: 28,
-    fontWeight: "bold",
-    marginBottom: 20,
+    fontWeight: "900",
+    color: "#FFD700",
+    marginTop: 20,
+    letterSpacing: 2,
+  },
+  timerCircle: {
+    width: 280,
+    height: 280,
+    borderRadius: 140,
+    borderWidth: 8,
+    borderColor: "#FFD700",
+    alignItems: "center",
+    justifyContent: "center",
+    marginVertical: 60,
+    backgroundColor: "#1a1a1a",
+    // Sombra para dar profundidade
+    shadowColor: "#FFD700",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 15,
+    elevation: 10,
   },
   timer: {
-    fontSize: 64,
-    fontWeight: "700",
+    fontSize: 70,
+    fontWeight: "800",
+    color: "#fff",
     fontVariant: ["tabular-nums"],
-    marginBottom: 40,
+  },
+  label: {
+    color: "#FFD700",
+    fontSize: 14,
+    fontWeight: "bold",
+    marginTop: 5,
   },
   buttonContainer: {
     flexDirection: "row",
-    gap: 12,
+    gap: 20,
+    width: '100%',
     justifyContent: "center",
+    paddingHorizontal: 30,
   },
   button: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    backgroundColor: "#FFD700",
-    borderRadius: 8,
-    minWidth: 80,
+    flexDirection: 'row',
+    paddingVertical: 15,
+    paddingHorizontal: 25,
+    borderRadius: 15,
     alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    minWidth: 140,
   },
-  buttonDisabled: {
-    opacity: 0.4,
+  btnIniciar: {
+    backgroundColor: "#FFD700",
+  },
+  btnParar: {
+    backgroundColor: "#ff4444",
+  },
+  btnReset: {
+    backgroundColor: "transparent",
+    borderWidth: 2,
+    borderColor: "#FFD700",
   },
   buttonText: {
     color: "#0d0d0d",
-    fontWeight: "600",
-    fontSize: 14,
+    fontWeight: "900",
+    fontSize: 16,
+    textTransform: "uppercase",
   },
 });
