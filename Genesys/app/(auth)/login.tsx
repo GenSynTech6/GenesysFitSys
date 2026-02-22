@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, TextInput, TouchableOpacity, View, 
   ActivityIndicator, Alert, ScrollView, KeyboardAvoidingView, Platform 
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-
+import { Colors } from "../../constants/colors";
 // Firebase Engine
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
@@ -62,12 +62,8 @@ export default function LoginScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
 
   // 1. MONITOR DE ESTADO
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) router.replace('/(tabs)'); 
-    });
-    return unsubscribe;
-  }, []);
+  // Removido redirecionamento automático ao iniciar o app.
+  // Agora navegamos para as abas somente após login/cadastro bem-sucedido.
 
   // 2. CONFIGURAÇÃO GOOGLE
   const [request, response, promptAsync] = Google.useAuthRequest({
@@ -85,7 +81,9 @@ useEffect(() => {
       const credential = GoogleAuthProvider.credential(idToken);
       
       signInWithCredential(auth, credential)
-        .then(() => console.log("Logado com sucesso!"))
+        .then(() => {
+          router.replace('/(tabs)');
+        })
         .catch((error) => {
           console.error("Erro detalhado:", error.code, error.message);
           Alert.alert("Erro de Credencial", "O Firebase não aceitou o token. Verifique o WebClientID no console.");
@@ -104,6 +102,7 @@ useEffect(() => {
       if (!userDoc.exists()) {
         await createUserData(result.user.uid, result.user.displayName || "Guerreiro", result.user.email || "");
       }
+      router.replace('/(tabs)');
     } catch (error: any) {
       Alert.alert("Erro Google", error.message);
     } finally {
@@ -144,6 +143,7 @@ const handleAuth = async () => {
       // --- LÓGICA DE LOGIN ---
       await signInWithEmailAndPassword(auth, cleanEmail, cleanPassword);
       console.log("Login realizado!");
+      router.replace('/(tabs)');
     } else {
       // --- LÓGICA DE CADASTRO ---
       if (!username) {
@@ -167,6 +167,7 @@ const handleAuth = async () => {
       await createUserData(user.uid, username, cleanEmail);
       
       console.log("Usuário e Perfil Firestore criados com sucesso!");
+      router.replace('/(tabs)');
     }
   } catch (error: any) {
     console.error(error);
@@ -176,9 +177,11 @@ const handleAuth = async () => {
   }
 };
 
+
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+        <Stack screenOptions={{ headerShown: false }}></Stack>
         <ThemedView style={styles.container}>
           
           <View style={styles.header}>
@@ -235,7 +238,7 @@ const handleAuth = async () => {
 
 const styles = StyleSheet.create({
   scrollContainer: { flexGrow: 1 },
-  container: { flex: 1, backgroundColor: '#123c2f', padding: 30, justifyContent: 'center' },
+  container: { flex: 1, backgroundColor: Colors.charcoal, padding: 30, justifyContent: 'center' },
   header: { position: 'fixed', alignItems: 'center', marginBottom: 35 },
   mainTitle: { fontSize: 34, fontWeight: '900', color: '#FFD700', marginTop: 10 },
   subtitle: { fontSize: 14, color: '#fff', opacity: 0.8 },
@@ -246,7 +249,7 @@ const styles = StyleSheet.create({
   activeTabText: { color: '#ebd86e' },
   inputArea: { gap: 12 },
   inputBox: { flexDirection: 'row', alignItems: 'center', borderRadius: 14, paddingHorizontal: 15, height: 60, backgroundColor: '#fff' },
-  inputField: { flex: 1, marginLeft: 12, fontSize: 16, color: '#000' },
+  inputField: { flex: 1, marginLeft: 12, fontSize: 16, color: '#c10000' },
   mainButton: { backgroundColor: '#FFD700', height: 60, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginTop: 15 },
   buttonLabel: { color: '#122620', fontWeight: 'bold', fontSize: 16 },
   googleButton: { flexDirection: 'row', backgroundColor: '#fff', height: 50, borderRadius: 14, alignItems: 'center', justifyContent: 'center', gap: 10 },

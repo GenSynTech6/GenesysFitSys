@@ -8,6 +8,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { gerarTreinoIA } from '../../services/gemini';
 import { DrawerMenu } from '@/components/drawer-menu';
+import { Colors } from "../../constants/colors";
 
 const { width } = Dimensions.get('window');
 
@@ -312,7 +313,7 @@ export default function HomePage() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#020617' }, 
+  container: { flex: 1, backgroundColor: Colors.charcoal }, 
   scrollContent: { padding: 20, paddingTop: 60, paddingBottom: 40 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 25 },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },

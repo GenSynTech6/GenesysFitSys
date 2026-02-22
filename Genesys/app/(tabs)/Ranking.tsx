@@ -4,6 +4,7 @@ import { getFirestore, collection, query, orderBy, limit, onSnapshot } from "fir
 import { ThemedText } from '@/components/themed-text';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerMenu } from '@/components/drawer-menu'; // Importação do Menu
+import { Colors } from '../../constants/colors';
 
 // Tipagem para silenciar os erros do TypeScript
 interface UserRanking {
@@ -94,7 +95,7 @@ export default function LeaderboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#020617', paddingHorizontal: 20 },
+  container: { flex: 1, backgroundColor:Colors.charcoal, paddingHorizontal: 20 },
   loadingContainer: { flex: 1, backgroundColor: '#020617', justifyContent: 'center', alignItems: 'center' },
   menuButton: { marginTop: 50, marginBottom: 10, alignSelf: 'flex-start' },
   

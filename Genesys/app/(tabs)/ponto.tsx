@@ -63,7 +63,7 @@ export default function PontoScreen() {
       </TouchableOpacity>
 
       <View style={styles.content}>
-        <Ionicons name="calendar-check" size={80} color={Colors.gold} />
+        <Ionicons name="calendar-outline" size={80} color={Colors.gold} />
         <Text style={styles.title}>REGISTRO DE PRESENÇA</Text>
         
         <View style={styles.streakCard}>
