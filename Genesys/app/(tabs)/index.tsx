@@ -12,6 +12,8 @@ import { Colors } from "../../constants/colors";
 
 const { width } = Dimensions.get('window');
 
+const curretLevel = userData?.level || 1;
+const isVip = userData?.statusPagamento === 'ativo';
 // Sistema de Biotipo baseado no IMC
 
 const Biotipo = [
@@ -43,7 +45,7 @@ const RANK_SYSTEM = [
 ];
 
 const getRank = (nivel: number): string => {
-  const rank = RANK_SYSTEM.find(r => nivel >= r.min && nivel <= r.max);
+      const rank = RANK_SYSTEM.find(r => nivel >= r.min && nivel <= r.max);
   return rank?.name || 'Desconhecido';
 };
 
@@ -51,8 +53,9 @@ export default function HomePage() {
   const auth = getAuth();
   const db = getFirestore();
   const router = useRouter();
-  
+
   const [userData, setUserData] = useState<any>(null);
+  const curretLevel = userData?.level || 1;
   const [showWelcome, setShowWelcome] = useState(false);
   const [peso, setPeso] = useState('');
   const [altura, setAltura] = useState('');
@@ -116,6 +119,18 @@ export default function HomePage() {
   };
 
   const handleAiConsult = async () => {
+    // VERIFICAÇÃO DE SEGURANÇA: Só libera se for VIP (Rank S / Ativo)
+    if (userData?.statusPagamento !== 'ativo') {
+      Alert.alert(
+        "SISTEMA BLOQUEADO 🔒",
+        "Sua linhagem ainda é de nível baixo. Desbloqueie o Rank S para acessar a IA Estratégica.",
+        [
+          { text: "Depois", style: "cancel" },
+          { text: "EVOLUIR AGORA", onPress: () => router.push('/ContrataAssinatura') } // Rota para sua tela de plano
+        ]
+      );
+      return;
+    }
     if (loadingIA) return;
     setLoadingAI(true);
     try {
@@ -131,31 +146,31 @@ export default function HomePage() {
 
   const finishWorkout = async () => {
     if (seconds < 60) return Alert.alert("Aviso", "Treine por pelo menos 1 minuto para validar a missão.");
-    
+
     setIsTraining(false);
     setSaving(true);
     try {
       const hoje = new Date().toISOString().split('T')[0];
       const userRef = doc(db, "users", auth.currentUser!.uid);
-      
+
       await updateDoc(userRef, {
         xp: increment(150),
         moedas: increment(30),
         streak: increment(userData?.lastWorkoutDate === hoje ? 0 : 1),
         lastWorkoutDate: hoje
       });
-      
+
       setSeconds(0);
       Alert.alert("Missão Cumprida!", "XP e Moedas creditados.");
     } catch (e) {
       Alert.alert("Erro", "Erro ao salvar progresso.");
-    } finally { 
-        setSaving(false); 
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleFirstUpdate = async () => {
-    if(!peso || !altura) return Alert.alert("Aviso", "Preencha todos os campos.");
+    if (!peso || !altura) return Alert.alert("Aviso", "Preencha todos os campos.");
     setSaving(true);
     const p = parseFloat(peso.replace(',', '.'));
     const a = parseFloat(altura.replace(',', '.'));
@@ -202,8 +217,8 @@ export default function HomePage() {
               <ThemedText style={styles.coinText}>{userData?.moedas || 0}</ThemedText>
             </View>
             <View style={[styles.coinContainer, { backgroundColor: '#2d1a01' }]}>
-                <Ionicons name="flame" size={16} color="#FF4500" />
-                <ThemedText style={{color: '#FF4500', fontWeight: 'bold'}}>{userData?.streak || 0}</ThemedText>
+              <Ionicons name="flame" size={16} color="#FF4500" />
+              <ThemedText style={{ color: '#FF4500', fontWeight: 'bold' }}>{userData?.streak || 0}</ThemedText>
             </View>
           </View>
         </View>
@@ -257,10 +272,10 @@ export default function HomePage() {
               <ThemedText style={[styles.workoutTitle, { color: '#FFD700' }]}>{formatTime(seconds)}</ThemedText>
               <ThemedText style={{ color: '#94a3b8' }}>Quebrando limites...</ThemedText>
             </View>
-            <TouchableOpacity 
-                style={styles.stopButton} 
-                onPress={finishWorkout}
-                disabled={saving}
+            <TouchableOpacity
+              style={styles.stopButton}
+              onPress={finishWorkout}
+              disabled={saving}
             >
               {saving ? <ActivityIndicator color="#fff" /> : <Ionicons name="stop" size={24} color="#fff" />}
             </TouchableOpacity>
@@ -311,7 +326,7 @@ export default function HomePage() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.charcoal }, 
+  container: { flex: 1, backgroundColor: Colors.charcoal },
   scrollContent: { padding: 20, paddingTop: 60, paddingBottom: 40 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 25 },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },

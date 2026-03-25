@@ -60,6 +60,7 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
     { label: 'Explorar', icon: 'compass', route: '/(tabs)/explore', emoji: '🗺️' },
     { label: 'Ponto', icon: 'location', route: '/(tabs)/ponto', emoji: '📍' },
     { label: 'Perfil', icon: 'trophy', route: '/(tabs)/gamificacao', emoji: '👤' },
+    { label: 'Perfil', icon: 'trophy', route: '/(tabs)/ContrataAssinatura', emoji: '👤' },
     { label: 'Configurações', icon: 'settings', route: '/(tabs)/config', emoji: '⚙️' },
   ];
 
