@@ -1,9 +1,25 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Dimensions } from 'react-native';
-// import { Crown, CheckCircle2, ShieldCheck, Zap, ArrowRight } from 'lucide-react-native';
-
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Dimensions, Alert } from 'react-native';
+import { Crown, CheckCircle2, ShieldCheck, Zap, ArrowRight } from 'lucide-react-native';
 import { getFunctions, httpsCallable } from 'firebase/functions'; // Importe do Firebase WEB SDK
+import { Linking } from 'react-native';
 
+const handleContratar = async (planoId: string) => {
+    try {
+        const functions = getFunctions();
+        const apiPagamento = httpsCallable(functions, 'processarAssinaturaGenesys');
+
+        const result = await apiPagamento({ planId: planoId });
+        const { checkoutUrl } = result.data as any;
+
+        if (checkoutUrl) {
+            // Abre o Mercado Pago no navegador do celular
+            await Linking.openURL(checkoutUrl);
+        }
+    } catch (e) {
+        Alert.alert("Erro", "Não foi possível iniciar o portal de pagamento.");
+    }
+};
 // Dentro do seu componente SubscriptionScreen:
 const handleSubscribe = async (planId: string) => {
     const functions = getFunctions();
@@ -42,63 +58,63 @@ export default function SubscriptionScreen() {
     const [selectedPlan, setSelectedPlan] = useState('premium');
 
     return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
-        {/* Header Épico */}
-        <View style={styles.header}>
-            {/* <Crown color="#FFD700" size={48} strokeWidth={1.5} /> */}
-            <Text style={styles.title}>EVOLUA SUA linhagem</Text>
-            <Text style={styles.subtitle}>Desbloqueie o poder total do sistema Genesys e alcance o Rank S.</Text>
-        </View>
+        <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+            {/* Header Épico */}
+            <View style={styles.header}>
+                <Crown color="#FFD700" size={48} strokeWidth={1.5} />
+                <Text style={styles.title}>EVOLUA SUA linhagem</Text>
+                <Text style={styles.subtitle}>Desbloqueie o poder total do sistema Genesys e alcance o Rank S.</Text>
+            </View>
 
-        {/* Cards de Planos */}
-        <View style={styles.plansContainer}>
-            {plans.map((plan) => (
-                <TouchableOpacity
-                    key={plan.id}
-                    activeOpacity={0.9}
-                    onPress={() => setSelectedPlan(plan.id as any)}
-                    style={[
-                        styles.planCard,
-                        plan.highlight && styles.highlightCard,
-                        selectedPlan === plan.id && styles.selectedCard,
-                    ]}
-                >
-                    {plan.badge && (
-                        <View style={styles.badge}>
-                            <Text style={styles.badgeText}>{plan.badge}</Text>
+            {/* Cards de Planos */}
+            <View style={styles.plansContainer}>
+                {plans.map((plan) => (
+                    <TouchableOpacity
+                        key={plan.id}
+                        activeOpacity={0.9}
+                        onPress={() => setSelectedPlan(plan.id as any)}
+                        style={[
+                            styles.planCard,
+                            plan.highlight && styles.highlightCard,
+                            selectedPlan === plan.id && styles.selectedCard,
+                        ]}
+                    >
+                        {plan.badge && (
+                            <View style={styles.badge}>
+                                <Text style={styles.badgeText}>{plan.badge}</Text>
+                            </View>
+                        )}
+
+                        <Text style={[styles.planTitle, plan.highlight && { color: '#FFD700' }]}>
+                            {plan.title}
+                        </Text>
+
+                        <View style={styles.priceContainer}>
+                            <Text style={styles.price}>{plan.price}</Text>
+                            <Text style={styles.period}>{plan.period}</Text>
                         </View>
-                    )}
 
-                    <Text style={[styles.planTitle, plan.highlight && { color: '#FFD700' }]}>
-                        {plan.title}
-                    </Text>
+                        <View style={styles.divider} />
 
-                    <View style={styles.priceContainer}>
-                        <Text style={styles.price}>{plan.price}</Text>
-                        <Text style={styles.period}>{plan.period}</Text>
-                    </View>
+                        {plan.features.map((feature, index) => (
+                            <View key={index} style={styles.featureRow}>                                
+                                <CheckCircle2 color={plan.highlight ? "#FFD700" : "#888"} size={18} />
+                                <Text style={styles.featureText}>{feature}</Text>
+                            </View>
+                        ))}
+                    </TouchableOpacity>
+                ))}
+            </View>
 
-                    <View style={styles.divider} />
-
-                    {plan.features.map((feature, index) => (
-                        <View key={index} style={styles.featureRow}>
-                            {/* <CheckCircle2 color={plan.highlight ? "#FFD700" : "#888"} size={18} /> */}
-                            <Text style={styles.featureText}>{feature}</Text>
-                        </View>
-                    ))}
+            {/* Botão de Ação */}
+            <View style={styles.footer}>
+                <TouchableOpacity style={styles.subscribeButton}>
+                    <Text style={styles.subscribeButtonText}>contratar plano</Text>
+                    <ArrowRight color="#111" size={20} strokeWidth={3} />
                 </TouchableOpacity>
-            ))}
-        </View>
-
-        {/* Botão de Ação */}
-        <View style={styles.footer}>
-            <TouchableOpacity style={styles.subscribeButton}>
-                <Text style={styles.subscribeButtonText}>contratar plano</Text>
-                {/* <ArrowRight color="#111" size={20} strokeWidth={3} /> */}
-            </TouchableOpacity>
-            <Text style={styles.footerNote}>Cancele quando quiser.</Text>
-        </View>
-    </ScrollView>
+                <Text style={styles.footerNote}>Cancele quando quiser.</Text>
+            </View>
+        </ScrollView>
     );
 }
 

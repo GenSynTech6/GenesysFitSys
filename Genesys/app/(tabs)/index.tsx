@@ -12,8 +12,7 @@ import { Colors } from "../../constants/colors";
 
 const { width } = Dimensions.get('window');
 
-const curretLevel = userData?.level || 1;
-const isVip = userData?.statusPagamento === 'ativo';
+
 // Sistema de Biotipo baseado no IMC
 
 const Biotipo = [
@@ -45,7 +44,7 @@ const RANK_SYSTEM = [
 ];
 
 const getRank = (nivel: number): string => {
-      const rank = RANK_SYSTEM.find(r => nivel >= r.min && nivel <= r.max);
+  const rank = RANK_SYSTEM.find(r => nivel >= r.min && nivel <= r.max);
   return rank?.name || 'Desconhecido';
 };
 
@@ -55,7 +54,7 @@ export default function HomePage() {
   const router = useRouter();
 
   const [userData, setUserData] = useState<any>(null);
-  const curretLevel = userData?.level || 1;
+  const currentLevel = userData?.level || 1;
   const [showWelcome, setShowWelcome] = useState(false);
   const [peso, setPeso] = useState('');
   const [altura, setAltura] = useState('');
@@ -66,8 +65,10 @@ export default function HomePage() {
 
   const [isTraining, setIsTraining] = useState(false);
   const [seconds, setSeconds] = useState(0);
-
+  const isVip = userData?.statusPagamento === 'ativo';
   const xpLimite = 1000;
+  const displayRank = isVip ? "Rank S (Lendário)" : getRank(currentLevel);
+  const rankColor = isVip ? "#FFD700" : "#64748b";
 
   useEffect(() => {
     if (auth.currentUser) {
@@ -223,15 +224,22 @@ export default function HomePage() {
           </View>
         </View>
 
-        {/* PROGRESS CARD */}
+        {/* PROGRESS CARD - Usando as novas variáveis com segurança */}
         <View style={styles.levelCard}>
           <View style={styles.levelHeader}>
-            <ThemedText style={styles.levelLabel}>NÍVEL {userData?.level || 1}</ThemedText>
-            <ThemedText style={styles.levelLabel}>{userData?.rank || "Aprendiz"}</ThemedText>
-            <ThemedText style={styles.xpLabel}>{userData?.xp || 0} / {xpLimite} XP</ThemedText>
+            <ThemedText style={[styles.levelLabel, { color: rankColor }]}>
+              {isVip && <Ionicons name="ribbon" size={14} color="#FFD700" />} {displayRank}
+            </ThemedText>
+            <ThemedText style={styles.xpLabel}>
+              {isVip ? "SISTEMA DESBLOQUEADO" : `${userData?.xp || 0} / 1000 XP`}
+            </ThemedText>
           </View>
-          <View style={styles.xpBarBackground}>
-            <View style={[styles.xpBarFill, { width: `${porcentagemXP}%` }]} />
+          <View style={[styles.xpBarBackground, isVip && { borderColor: '#FFD700', borderWidth: 0.5 }]}>
+            <View style={[
+              styles.xpBarFill,
+              { width: isVip ? '100%' : `${Math.min(((userData?.xp || 0) / 1000) * 100, 100)}%` },
+              isVip && { backgroundColor: '#FFD700' }
+            ]} />
           </View>
         </View>
 
