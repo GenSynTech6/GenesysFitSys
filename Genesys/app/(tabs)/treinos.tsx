@@ -39,6 +39,7 @@ export default function TreinosScreen() {
         const [showDrawer, setShowDrawer] = useState(false);
 
         const [modalCriar, setModalCriar] = useState(false);
+        const [modalLookPr, setModalLookPr] = useState(false);
         const [modalView, setModalView] = useState<any>(null);
         const [nomeRotina, setNomeRotina] = useState("");
 
@@ -181,6 +182,10 @@ export default function TreinosScreen() {
                     </View>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>REGISTROS ATIVOS</Text>
+                        <TouchableOpacity style={styles.addBtn} onPress={() => setModalLookPr(true)}>
+                            <Ionicons name="add" size={24} color={Colors.gold} />
+                            <Text style={styles.addBtnText}>Ver PRs</Text>
+                        </TouchableOpacity>
                         <TouchableOpacity style={styles.addBtn} onPress={() => setModalCriar(true)}>
                             <Ionicons name="add" size={24} color={Colors.gold} />
                             <Text style={styles.addBtnText}>CRIAR</Text>
@@ -280,7 +285,16 @@ export default function TreinosScreen() {
                         </View>
                     </View>
                 </Modal>
-
+                <Modal visible={modalLookPr} animationType="slide" transparent={true}>
+                    <View style={styles.modalOverlay}>
+                        <View style={styles.modalContent}>
+                            <Text style={styles.modalTitle}>PRs ATUAIS</Text>
+                        </View>
+                        <TouchableOpacity onPress={() => setModalLookPr(false)}>
+                            <Text style={styles.startWorkoutText}>FECHAR</Text>
+                        </TouchableOpacity>
+                    </View>
+                </Modal>
                 {/* MODAL CRIAR COM SELETOR DE SÉRIES/REPS */}
                 <Modal visible={modalCriar} animationType="slide" transparent={true}>
                     <View style={styles.modalOverlay}>
