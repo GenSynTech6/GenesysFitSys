@@ -1,18 +1,20 @@
-import React, { useState, useMemo, useEffect } from "react";
-import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View, Alert, ActivityIndicator } from "react-native";
+import React, { useState, useMemo, useEffect } from "react"; 
+import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View, Alert, ActivityIndicator, Dimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { getFirestore, doc, onSnapshot, updateDoc, increment } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
-import { Colors } from "../../constants/colors";
 import { DrawerMenu } from "../../components/drawer-menu";
 
+const { width } = Dimensions.get('window');
+
 const alimentosBase = [
-  { nome: "Arroz", calorias: 130 },
-  { nome: "Feijão", calorias: 90 },
-  { nome: "Frango", calorias: 165 },
-  { nome: "Batata", calorias: 77 },
-  { nome: "Ovo", calorias: 155 },
-  { nome: "Whey Protein", calorias: 120 },
+  { nome: "ARROZ", calorias: 130 },
+  { nome: "FEIJÃO", calorias: 90 },
+  { nome: "FRANGO", calorias: 165 },
+  { nome: "BATATA", calorias: 77 },
+  { nome: "OVO", calorias: 155 },
+  { nome: "WHEY PROTEIN", calorias: 120 },
 ];
 
 export default function DietaScreen() {
@@ -26,7 +28,6 @@ export default function DietaScreen() {
   const [quantidade, setQuantidade] = useState("100");
   const [showDrawer, setShowDrawer] = useState(false);
 
-  // 1. Monitorar dados do usuário no Firebase
   useEffect(() => {
     if (auth.currentUser) {
       const unsub = onSnapshot(doc(db, "users", auth.currentUser.uid), (snapshot) => {
@@ -37,7 +38,6 @@ export default function DietaScreen() {
     }
   }, []);
 
-  // 2. Filtragem de busca (Memo)
   const resultado = useMemo(() => {
     if (!busca) return [];
     return alimentosBase.filter((item) =>
@@ -48,27 +48,21 @@ export default function DietaScreen() {
   const metaKcal = userData?.metaCalorica || 2000;
   const porcentagem = Math.min(100, Math.round((consumido / metaKcal) * 100));
 
-  // 3. Adicionar alimento e ganhar XP
   const adicionarConsumo = async (alimento: { nome: string; calorias: number }) => {
     const qtd = Number(quantidade) || 0;
     const kcal = (alimento.calorias * qtd) / 100;
-    
     setConsumido(prev => prev + kcal);
 
-    // Salvar progresso de XP no Firebase por se alimentar
     if (auth.currentUser) {
       const userRef = doc(db, "users", auth.currentUser.uid);
-      await updateDoc(userRef, {
-        xp: increment(5), // Ganha 5 de XP por registrar alimento
-      });
+      await updateDoc(userRef, { xp: increment(5) });
     }
 
     if (consumido + kcal > metaKcal) {
-      Alert.alert("Limite Atingido", "⚠️ Você ultrapassou sua meta! Cuidado com o Rank!");
+      Alert.alert("[ ALERTA DE SISTEMA ]", "EXCESSO DE CALORIAS DETECTADO. O RANK PODE SER AFETADO.");
     }
   };
 
-  // 4. Atualizar Meta no Firebase
   const atualizarMetaFirebase = async (valor: string) => {
     const novaMeta = Number(valor);
     if (novaMeta > 0 && auth.currentUser) {
@@ -77,82 +71,92 @@ export default function DietaScreen() {
     }
   };
 
-  if (loading) return <View style={styles.loading}><ActivityIndicator color={Colors.gold} /></View>;
+  if (loading) return (
+    <LinearGradient colors={["#000", "#020617"]} style={styles.loading}>
+      <ActivityIndicator color="#22d3ee" />
+    </LinearGradient>
+  );
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity style={styles.menuButton} onPress={() => setShowDrawer(true)}>
-        <Ionicons name="menu" size={38} color={Colors.gold} />
-      </TouchableOpacity>
-
-      <Text style={styles.title}>🥗 DIETA & NUTRIÇÃO</Text>
+    <LinearGradient colors={["#000000", "#020617", "#0f172a"]} style={styles.container}>
       
-      {/* Header Gamificado */}
-      <View style={styles.userCard}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarLetter}>{userData?.username?.charAt(0).toUpperCase() || "U"}</Text>
+      {/* HEADER PROTOCOLO */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => setShowDrawer(true)} style={styles.menuBox}>
+          <Ionicons name="grid-outline" size={24} color="#22d3ee" />
+        </TouchableOpacity>
+        <View style={{ marginLeft: 15 }}>
+          <Text style={styles.systemTag}>[ SISTEMA GENESYS ]</Text>
+          <Text style={styles.title}>DIETA_&_ALQUIMIA</Text>
         </View>
-        <View style={{ flex: 1, marginLeft: 15 }}>
-          <Text style={styles.userName}>{userData?.username || "Guerreiro"}</Text>
-          <View style={styles.rankBadge}>
-            <Text style={styles.rankBadgeText}>{userData?.rank || "Aprendiz"}</Text>
-          </View>
+      </View>
+      
+      {/* STATUS WINDOW (USER CARD) */}
+      <View style={styles.statusWindow}>
+        <View style={styles.avatarBorder}>
+          <Text style={styles.avatarText}>{userData?.username?.charAt(0).toUpperCase() || "J"}</Text>
         </View>
-        <View style={styles.xpBox}>
-          <Text style={styles.xpValue}>{userData?.xp || 0}</Text>
-          <Text style={styles.xpLabel}>XP TOTAL</Text>
+        <View style={styles.statusInfo}>
+          <Text style={styles.userName}>{userData?.username?.toUpperCase() || "JOGADOR"}</Text>
+          <Text style={styles.rankText}>CLASSE: <Text style={{color: '#22d3ee'}}>{userData?.rank?.toUpperCase() || "F-RANK"}</Text></Text>
+        </View>
+        <View style={styles.xpIndicator}>
+          <Text style={styles.xpVal}>{userData?.xp || 0}</Text>
+          <Text style={styles.xpLabel}>XP_CORE</Text>
         </View>
       </View>
 
-      {/* Painel de Calorias */}
-      <View style={styles.statsRow}>
-        <View style={styles.statItem}>
-          <Text style={styles.statLabel}>Meta Diária</Text>
-          <Text style={styles.statValue}>{metaKcal} <Text style={styles.unit}>kcal</Text></Text>
+      {/* HUD DE CALORIAS */}
+      <View style={styles.hudContainer}>
+        <View style={styles.hudItem}>
+          <Text style={styles.hudLabel}>OBJETIVO_DIÁRIO</Text>
+          <Text style={styles.hudValue}>{metaKcal} <Text style={styles.unit}>KCAL</Text></Text>
         </View>
-        <View style={[styles.statItem, { borderLeftWidth: 1, borderLeftColor: '#333' }]}>
-          <Text style={styles.statLabel}>Consumido</Text>
-          <Text style={[styles.statValue, { color: consumido > metaKcal ? '#ff4444' : Colors.gold }]}>
-            {consumido.toFixed(0)} <Text style={styles.unit}>kcal</Text>
+        <View style={styles.hudDivider} />
+        <View style={styles.hudItem}>
+          <Text style={styles.hudLabel}>ABSORVIDO</Text>
+          <Text style={[styles.hudValue, { color: consumido > metaKcal ? '#ef4444' : '#22d3ee' }]}>
+            {consumido.toFixed(0)} <Text style={styles.unit}>KCAL</Text>
           </Text>
         </View>
       </View>
 
-      {/* Barra de Progresso Estilizada */}
-      <View style={styles.progressContainer}>
-        <View style={styles.progressBar}>
-          <View style={[
-            styles.progressFill, 
-            { width: `${porcentagem}%`, backgroundColor: consumido > metaKcal ? '#ff4444' : Colors.gold }
-          ]} />
+      {/* BARRA DE MANA (PROGRESSO) */}
+      <View style={styles.manaContainer}>
+        <View style={styles.manaBarBackground}>
+          <LinearGradient 
+            colors={["#0891b2", "#22d3ee"]} 
+            start={{x: 0, y: 0}} end={{x: 1, y: 0}}
+            style={[styles.manaFill, { width: `${porcentagem}%` }]} 
+          />
         </View>
-        <Text style={styles.progressText}>{porcentagem}% da meta atingida</Text>
+        <Text style={styles.manaText}>{porcentagem}% DO PROTOCOLO CONCLUÍDO</Text>
       </View>
 
-      {/* Controles de Busca */}
-      <View style={styles.inputSection}>
+      {/* SCANNER DE SUPRIMENTOS (INPUTS) */}
+      <View style={styles.scannerSection}>
         <TextInput
           style={styles.inputMeta}
-          placeholder="Alterar Meta Diária"
+          placeholder="REDEFINIR META_KCAL"
+          placeholderTextColor="#475569"
           keyboardType="numeric"
           onSubmitEditing={(e) => atualizarMetaFirebase(e.nativeEvent.text)}
-          placeholderTextColor="#666"
         />
         <View style={styles.searchRow}>
           <TextInput
-            style={[styles.input, { flex: 2 }]}
-            placeholder="Buscar alimento..."
+            style={[styles.inputField, { flex: 2 }]}
+            placeholder="ESCANEAR ALIMENTO..."
+            placeholderTextColor="#475569"
             value={busca}
             onChangeText={setBusca}
-            placeholderTextColor="#666"
           />
           <TextInput
-            style={[styles.input, { flex: 1, textAlign: 'center' }]}
-            placeholder="Gramas"
+            style={[styles.inputField, { flex: 1, textAlign: 'center' }]}
+            placeholder="QTD (G)"
+            placeholderTextColor="#475569"
             value={quantidade}
             onChangeText={setQuantidade}
             keyboardType="numeric"
-            placeholderTextColor="#666"
           />
         </View>
       </View>
@@ -161,59 +165,63 @@ export default function DietaScreen() {
         data={resultado}
         keyExtractor={(item) => item.nome}
         renderItem={({ item }) => (
-          <View style={styles.card}>
-            <View>
-              <Text style={styles.cardText}>{item.nome}</Text>
-              <Text style={styles.cardCalories}>{item.calorias} kcal / 100g</Text>
+          <TouchableOpacity style={styles.itemCard} onPress={() => adicionarConsumo(item)}>
+            <View style={styles.itemInfo}>
+              <Text style={styles.itemName}>{item.nome}</Text>
+              <Text style={styles.itemSub}>{item.calorias} KCAL / 100G</Text>
             </View>
-            <TouchableOpacity style={styles.addButton} onPress={() => adicionarConsumo(item)}>
-              <Ionicons name="add" size={24} color={Colors.charcoal} />
-            </TouchableOpacity>
-          </View>
+            <View style={styles.addIconBox}>
+                <Ionicons name="flash-sharp" size={18} color="#000" />
+            </View>
+          </TouchableOpacity>
         )}
-        ListEmptyComponent={busca.length > 0 ? <Text style={styles.emptyText}>Nenhum alimento na base...</Text> : null}
+        ListEmptyComponent={busca.length > 0 ? <Text style={styles.emptyText}>NENHUM SUPRIMENTO ENCONTRADO NO DATABASE.</Text> : null}
       />
 
       <DrawerMenu visible={showDrawer} onClose={() => setShowDrawer(false)} />
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.charcoal, padding: 20, paddingTop: 50 },
-  loading: { flex: 1, backgroundColor: Colors.charcoal, justifyContent: 'center' },
-  menuButton: { marginBottom: 20 },
-  title: { color: Colors.gold, fontSize: 24, fontWeight: "900", textAlign: "center", letterSpacing: 2, marginBottom: 20 },
+  container: { flex: 1, paddingHorizontal: 25 },
+  loading: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  header: { marginTop: 60, flexDirection: 'row', alignItems: 'center', marginBottom: 30 },
+  menuBox: { width: 45, height: 45, borderWidth: 1, borderColor: 'rgba(34, 211, 238, 0.3)', justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(34, 211, 238, 0.05)' },
+  systemTag: { color: '#22d3ee', fontSize: 9, fontWeight: '900', letterSpacing: 2 },
+  title: { color: '#fff', fontSize: 18, fontWeight: "900", fontStyle: 'italic' },
   
-  userCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1a1a1a', padding: 15, borderRadius: 15, marginBottom: 25, borderWidth: 1, borderColor: '#333' },
-  avatar: { width: 50, height: 50, borderRadius: 25, backgroundColor: Colors.gold, alignItems: 'center', justifyContent: 'center' },
-  avatarLetter: { color: Colors.charcoal, fontSize: 22, fontWeight: 'bold' },
-  userName: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-  rankBadge: { backgroundColor: '#333', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4, alignSelf: 'flex-start', marginTop: 4 },
-  rankBadgeText: { color: Colors.gold, fontSize: 10, fontWeight: 'bold' },
-  xpBox: { alignItems: 'center', paddingLeft: 15, borderLeftWidth: 1, borderLeftColor: '#333' },
-  xpValue: { color: Colors.gold, fontSize: 20, fontWeight: 'bold' },
-  xpLabel: { color: '#666', fontSize: 8, fontWeight: 'bold' },
+  statusWindow: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(15, 23, 42, 0.5)', padding: 15, borderWidth: 1, borderColor: 'rgba(34, 211, 238, 0.15)', marginBottom: 25 },
+  avatarBorder: { width: 45, height: 45, borderWidth: 1, borderColor: '#22d3ee', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(34, 211, 238, 0.1)' },
+  avatarText: { color: '#fff', fontSize: 20, fontWeight: '900' },
+  statusInfo: { flex: 1, marginLeft: 15 },
+  userName: { color: '#fff', fontSize: 14, fontWeight: '900', fontStyle: 'italic' },
+  rankText: { fontSize: 10, fontWeight: '900', marginTop: 2, color: '#475569' },
+  xpIndicator: { alignItems: 'center', paddingLeft: 15, borderLeftWidth: 1, borderLeftColor: 'rgba(34, 211, 238, 0.1)' },
+  xpVal: { color: '#22d3ee', fontSize: 18, fontWeight: '900' },
+  xpLabel: { color: '#475569', fontSize: 8, fontWeight: '900' },
 
-  statsRow: { flexDirection: 'row', backgroundColor: '#1a1a1a', borderRadius: 15, padding: 20, marginBottom: 20 },
-  statItem: { flex: 1, alignItems: 'center' },
-  statLabel: { color: '#666', fontSize: 11, marginBottom: 5 },
-  statValue: { color: '#fff', fontSize: 22, fontWeight: 'bold' },
-  unit: { fontSize: 12, color: '#666' },
+  hudContainer: { flexDirection: 'row', backgroundColor: 'rgba(2, 6, 23, 0.8)', padding: 20, marginBottom: 20, borderWidth: 1, borderColor: 'rgba(34, 211, 238, 0.1)' },
+  hudItem: { flex: 1, alignItems: 'center' },
+  hudLabel: { color: '#22d3ee', fontSize: 9, fontWeight: '900', marginBottom: 5, opacity: 0.7 },
+  hudValue: { color: '#fff', fontSize: 22, fontWeight: '900', fontStyle: 'italic' },
+  hudDivider: { width: 1, height: '100%', backgroundColor: 'rgba(34, 211, 238, 0.1)' },
+  unit: { fontSize: 10, color: '#475569' },
 
-  progressContainer: { marginBottom: 30 },
-  progressBar: { height: 10, backgroundColor: '#333', borderRadius: 5, overflow: 'hidden' },
-  progressFill: { height: '100%' },
-  progressText: { color: '#666', fontSize: 11, marginTop: 8, textAlign: 'center' },
+  manaContainer: { marginBottom: 30 },
+  manaBarBackground: { height: 4, backgroundColor: 'rgba(255,255,255,0.05)', overflow: 'hidden' },
+  manaFill: { height: '100%', shadowColor: '#22d3ee', shadowRadius: 5, shadowOpacity: 0.5 },
+  manaText: { color: '#475569', fontSize: 9, fontWeight: '900', marginTop: 8, textAlign: 'center', letterSpacing: 1 },
 
-  inputSection: { marginBottom: 20 },
-  inputMeta: { backgroundColor: '#111', padding: 12, borderRadius: 10, color: '#fff', fontSize: 12, marginBottom: 10, borderWidth: 1, borderColor: '#222' },
+  scannerSection: { marginBottom: 20 },
+  inputMeta: { backgroundColor: 'rgba(15, 23, 42, 0.5)', padding: 12, color: '#fff', fontSize: 11, marginBottom: 10, borderWidth: 1, borderColor: 'rgba(34, 211, 238, 0.1)', fontWeight: 'bold' },
   searchRow: { flexDirection: 'row', gap: 10 },
-  input: { backgroundColor: '#1a1a1a', padding: 15, borderRadius: 12, color: '#fff', borderWidth: 1, borderColor: '#333' },
+  inputField: { backgroundColor: 'rgba(15, 23, 42, 0.5)', padding: 15, color: '#fff', borderWidth: 1, borderColor: 'rgba(34, 211, 238, 0.1)', fontSize: 12, fontWeight: 'bold' },
   
-  card: { backgroundColor: '#1a1a1a', padding: 18, borderRadius: 15, marginVertical: 6, flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderLeftWidth: 4, borderLeftColor: Colors.gold },
-  cardText: { color: '#fff', fontWeight: "bold", fontSize: 16 },
-  cardCalories: { color: Colors.gold, fontSize: 12, marginTop: 4 },
-  addButton: { backgroundColor: Colors.gold, width: 40, height: 40, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
-  emptyText: { color: '#666', textAlign: 'center', marginTop: 20 }
+  itemCard: { backgroundColor: 'rgba(15, 23, 42, 0.3)', padding: 18, marginVertical: 6, flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderLeftWidth: 3, borderLeftColor: '#22d3ee' },
+  itemInfo: { flex: 1 },
+  itemName: { color: '#fff', fontWeight: "900", fontSize: 14, letterSpacing: 1 },
+  itemSub: { color: '#22d3ee', fontSize: 10, marginTop: 4, fontWeight: '700' },
+  addIconBox: { backgroundColor: '#22d3ee', width: 35, height: 35, justifyContent: 'center', alignItems: 'center' },
+  emptyText: { color: '#475569', textAlign: 'center', marginTop: 20, fontSize: 10, fontWeight: '900' }
 });

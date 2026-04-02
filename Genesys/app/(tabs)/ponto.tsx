@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, Text, TouchableOpacity, View, Alert, ActivityIndicator } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View, Alert, ActivityIndicator, Dimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { getFirestore, doc, onSnapshot, updateDoc, increment, serverTimestamp } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
-import { Colors } from "../../constants/colors";
 import { DrawerMenu } from "../../components/drawer-menu";
+
+const { width } = Dimensions.get('window');
 
 export default function PontoScreen() {
   const auth = getAuth();
@@ -30,16 +32,14 @@ export default function PontoScreen() {
     const hoje = new Date().toISOString().split('T')[0];
     const ultimaData = userData.lastWorkoutDate;
 
-    // 1. Verificar se já bateu ponto hoje
     if (ultimaData === hoje) {
-      Alert.alert("Missão Concluída", "Você já registrou seu treino de hoje, Guerreiro! Volte amanhã.");
+      Alert.alert("[ STATUS: CONCLUÍDO ]", "A OFENSIVA DE HOJE JÁ FOI REGISTRADA. SISTEMA EM STANDBY ATÉ O PRÓXIMO CICLO.");
       return;
     }
 
     try {
       const userRef = doc(db, "users", auth.currentUser.uid);
       
-      // 2. Atualizar Streak, XP e Moedas
       await updateDoc(userRef, {
         streak: increment(1),
         xp: increment(100),
@@ -48,92 +48,119 @@ export default function PontoScreen() {
         lastUpdated: serverTimestamp()
       });
 
-      Alert.alert("🔥 OFENSIVA AUMENTOU!", "Você ganhou +100 XP e +50 Moedas!");
+      Alert.alert("[ OFENSIVA SINCRONIZADA ]", "RECURSOS ADQUIRIDOS: +100 XP | +50 CRÉDITOS.");
     } catch (error) {
-      Alert.alert("Erro", "Falha ao acessar o Sistema Genesys.");
+      Alert.alert("[ ERRO ]", "FALHA NA CONEXÃO COM O NÚCLEO GENESYS.");
     }
   };
 
-  if (loading) return <View style={styles.loading}><ActivityIndicator color={Colors.gold} /></View>;
+  if (loading) return (
+    <View style={styles.loading}>
+      <ActivityIndicator color="#22d3ee" />
+    </View>
+  );
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity style={styles.menuButton} onPress={() => setShowDrawer(true)}>
-        <Ionicons name="menu" size={38} color={Colors.gold} />
-      </TouchableOpacity>
+    <LinearGradient colors={["#000", "#020617"]} style={styles.container}>
+      
+      {/* HEADER TÉCNICO */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => setShowDrawer(true)} style={styles.menuBox}>
+          <Ionicons name="grid-outline" size={24} color="#22d3ee" />
+        </TouchableOpacity>
+        <Text style={styles.headerTag}>SISTEMA // PROTOCOLO_PRESENÇA</Text>
+      </View>
 
       <View style={styles.content}>
-        <Ionicons name="calendar-outline" size={80} color={Colors.gold} />
-        <Text style={styles.title}>REGISTRO DE PRESENÇA</Text>
+        <View style={styles.iconContainer}>
+          <Ionicons name="shield-checkmark-sharp" size={60} color="#22d3ee" />
+          <View style={styles.pulseRing} />
+        </View>
+
+        <Text style={styles.title}>VALIDAÇÃO_DE_OFENSIVA</Text>
         
+        {/* CARD DE STREAK (STREAK HUB) */}
         <View style={styles.streakCard}>
-          <Ionicons name="flame" size={40} color="#FF4500" />
+          <LinearGradient colors={['rgba(34, 211, 238, 0.05)', 'transparent']} style={styles.cardGlow} />
+          <Ionicons name="flame-sharp" size={32} color="#ef4444" />
           <Text style={styles.streakNumber}>{userData?.streak || 0}</Text>
-          <Text style={styles.streakLabel}>DIAS SEGUIDOS</Text>
+          <Text style={styles.streakLabel}>DIAS_EM_ATIVIDADE</Text>
         </View>
 
         <Text style={styles.infoText}>
-          Bata o ponto diariamente para manter sua ofensiva e ganhar recompensas do Sistema.
+          MANTENHA A CONSTÂNCIA PARA EVITAR A DEGRADAÇÃO DO SEU RANK E GARANTIR O FLUXO DE RECURSOS.
         </Text>
 
-        <TouchableOpacity style={styles.mainButton} onPress={baterPonto}>
-          <Text style={styles.buttonText}>BATER PONTO AGORA</Text>
+        <TouchableOpacity 
+          activeOpacity={0.8} 
+          style={styles.mainButton} 
+          onPress={baterPonto}
+        >
+          <LinearGradient 
+            colors={["#22d3ee", "#0891b2"]} 
+            start={{x:0, y:0}} end={{x:1, y:0}}
+            style={styles.gradientBtn}
+          >
+            <Text style={styles.buttonText}>SINCRONIZAR AGORA</Text>
+            <Ionicons name="finger-print-sharp" size={20} color="#000" style={{marginLeft: 10}} />
+          </LinearGradient>
         </TouchableOpacity>
 
+        {/* RECOMPENSAS ESTIMADAS */}
         <View style={styles.rewardsRow}>
             <View style={styles.rewardItem}>
-                <Ionicons name="sparkles" size={18} color={Colors.gold} />
-                <Text style={styles.rewardText}>+100 XP</Text>
+                <Ionicons name="flash-sharp" size={14} color="#22d3ee" />
+                <Text style={styles.rewardText}>+100_XP</Text>
             </View>
             <View style={styles.rewardItem}>
-                <Ionicons name="flash" size={18} color={Colors.gold} />
-                <Text style={styles.rewardText}>+50 Moedas</Text>
+                <Ionicons name="cube-sharp" size={14} color="#22d3ee" />
+                <Text style={styles.rewardText}>+50_CRED</Text>
             </View>
         </View>
       </View>
 
       <DrawerMenu visible={showDrawer} onClose={() => setShowDrawer(false)} />
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.charcoal, padding: 20 },
-  loading: { flex: 1, backgroundColor: Colors.charcoal, justifyContent: 'center' },
-  menuButton: { marginTop: 40 },
+  container: { flex: 1, paddingHorizontal: 25 },
+  loading: { flex: 1, backgroundColor: '#000', justifyContent: 'center' },
+  
+  header: { flexDirection: 'row', alignItems: 'center', marginTop: 50, marginBottom: 20 },
+  menuBox: { width: 45, height: 45, borderWidth: 1, borderColor: 'rgba(34, 211, 238, 0.3)', justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(34, 211, 238, 0.05)' },
+  headerTag: { color: '#22d3ee', fontSize: 9, fontWeight: '900', letterSpacing: 2, marginLeft: 15 },
+
   content: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   
-  title: { color: Colors.gold, fontSize: 22, fontWeight: "900", letterSpacing: 2, marginVertical: 20 },
+  iconContainer: { marginBottom: 30, alignItems: 'center', justifyContent: 'center' },
+  pulseRing: { position: 'absolute', width: 100, height: 100, borderRadius: 50, borderWidth: 1, borderColor: 'rgba(34, 211, 238, 0.2)', opacity: 0.5 },
+
+  title: { color: '#fff', fontSize: 18, fontWeight: "900", letterSpacing: 3, marginBottom: 40, fontStyle: 'italic' },
   
   streakCard: { 
-    backgroundColor: '#1a1a1a', 
-    padding: 30, 
-    borderRadius: 25, 
-    alignItems: 'center', 
+    backgroundColor: 'rgba(15, 23, 42, 0.5)', 
+    paddingVertical: 40, 
     width: '100%',
+    alignItems: 'center', 
     borderWidth: 1,
-    borderColor: '#333',
-    marginBottom: 30
+    borderColor: 'rgba(34, 211, 238, 0.1)',
+    marginBottom: 40,
+    position: 'relative',
+    overflow: 'hidden'
   },
-  streakNumber: { color: '#fff', fontSize: 60, fontWeight: 'bold' },
-  streakLabel: { color: '#666', fontSize: 12, fontWeight: 'bold', letterSpacing: 1 },
+  cardGlow: { position: 'absolute', top: 0, left: 0, right: 0, height: 100 },
+  streakNumber: { color: '#fff', fontSize: 72, fontWeight: '900', fontStyle: 'italic', marginVertical: 5 },
+  streakLabel: { color: '#475569', fontSize: 10, fontWeight: '900', letterSpacing: 2 },
 
-  infoText: { color: '#999', textAlign: 'center', marginBottom: 30, lineHeight: 20 },
+  infoText: { color: '#475569', textAlign: 'center', marginBottom: 40, fontSize: 10, lineHeight: 16, fontWeight: '700', letterSpacing: 1 },
   
-  mainButton: { 
-    backgroundColor: Colors.gold, 
-    width: '100%', 
-    padding: 20, 
-    borderRadius: 15, 
-    alignItems: 'center',
-    elevation: 10,
-    shadowColor: Colors.gold,
-    shadowOpacity: 0.3,
-    shadowRadius: 10
-  },
-  buttonText: { color: Colors.charcoal, fontWeight: "900", fontSize: 18 },
+  mainButton: { width: '100%', height: 65, borderRadius: 2, overflow: 'hidden' },
+  gradientBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  buttonText: { color: '#000', fontWeight: "900", fontSize: 16, letterSpacing: 1 },
 
-  rewardsRow: { flexDirection: 'row', gap: 20, marginTop: 25 },
-  rewardItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  rewardText: { color: Colors.gold, fontWeight: 'bold', fontSize: 14 }
+  rewardsRow: { flexDirection: 'row', gap: 30, marginTop: 30 },
+  rewardItem: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  rewardText: { color: '#22d3ee', fontWeight: '900', fontSize: 10, letterSpacing: 1 }
 });

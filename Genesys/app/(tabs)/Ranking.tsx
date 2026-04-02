@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, Dimensions } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { getFirestore, collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
 import { ThemedText } from '@/components/themed-text';
 import { Ionicons } from '@expo/vector-icons';
-import { DrawerMenu } from '@/components/drawer-menu'; // Importação do Menu
-import { Colors } from '../../constants/colors';
+import { DrawerMenu } from '@/components/drawer-menu';
 
-// Tipagem para silenciar os erros do TypeScript
+const { width } = Dimensions.get('window');
+
 interface UserRanking {
   id: string;
   username?: string;
@@ -18,7 +19,7 @@ interface UserRanking {
 export default function LeaderboardScreen() {
   const [topUsers, setTopUsers] = useState<UserRanking[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showDrawer, setShowDrawer] = useState(false); // Estado do Menu
+  const [showDrawer, setShowDrawer] = useState(false);
   const db = getFirestore();
 
   useEffect(() => {
@@ -37,99 +38,127 @@ export default function LeaderboardScreen() {
     return () => unsub();
   }, []);
 
-  const renderMedal = (index: number) => {
-    if (index === 0) return <Ionicons name="trophy" size={26} color="#FFD700" />;
-    if (index === 1) return <Ionicons name="trophy" size={26} color="#C0C0C0" />;
-    if (index === 2) return <Ionicons name="trophy" size={26} color="#CD7F32" />;
+  const renderRankIcon = (index: number) => {
+    if (index === 0) return <Ionicons name="shield-half-sharp" size={24} color="#22d3ee" />;
+    if (index === 1) return <Ionicons name="shield-sharp" size={22} color="rgba(34, 211, 238, 0.7)" />;
+    if (index === 2) return <Ionicons name="shield-outline" size={20} color="rgba(34, 211, 238, 0.5)" />;
     return <ThemedText style={styles.rankNumber}>{index + 1}</ThemedText>;
   };
 
   if (loading) return (
     <View style={styles.loadingContainer}>
-      <ActivityIndicator size="large" color="#FFD700" />
+      <ActivityIndicator size="large" color="#22d3ee" />
     </View>
   );
 
   return (
-    <View style={styles.container}>
-      {/* Botão do Menu Lateral */}
-      <TouchableOpacity style={styles.menuButton} onPress={() => setShowDrawer(true)}>
-        <Ionicons name="menu" size={38} color="#FFD700" />
-      </TouchableOpacity>
+    <LinearGradient colors={["#000", "#020617"]} style={styles.container}>
+      
+      {/* HEADER PROTOCOLO */}
+      <View style={styles.topBar}>
+        <TouchableOpacity style={styles.menuBox} onPress={() => setShowDrawer(true)}>
+          <Ionicons name="grid-outline" size={24} color="#22d3ee" />
+        </TouchableOpacity>
+        <ThemedText style={styles.headerTag}>SISTEMA // RANKING_GLOBAL</ThemedText>
+      </View>
 
       <View style={styles.header}>
-        <ThemedText style={styles.headerTitle}>LIGA DOS MONARCAS</ThemedText>
-        <ThemedText style={styles.headerSub}>Os 10 guerreiros mais poderosos</ThemedText>
+        <ThemedText style={styles.headerTitle}>LIGA_DOS_MONARCAS</ThemedText>
+        <View style={styles.separator} />
+        <ThemedText style={styles.headerSub}>TOP_10_CAÇADORES_ATIVOS</ThemedText>
       </View>
 
       <FlatList
         data={topUsers}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingBottom: 40 }}
+        contentContainerStyle={{ paddingBottom: 40, paddingHorizontal: 20 }}
         renderItem={({ item, index }) => (
-          <View style={[styles.userCard, index < 3 && styles.topThreeCard]}>
+          <View style={[
+            styles.userCard, 
+            index < 3 && styles.topThreeCard,
+            index === 0 && styles.firstPlaceBorder
+          ]}>
+            {index === 0 && <LinearGradient colors={['rgba(34, 211, 238, 0.15)', 'transparent']} style={styles.cardGlow} />}
+            
             <View style={styles.rankSection}>
-              {renderMedal(index)}
+              {renderRankIcon(index)}
             </View>
             
             <View style={styles.userInfo}>
-              <ThemedText style={styles.userName}>{item.username || "Guerreiro"}</ThemedText>
-              <ThemedText style={styles.userRankBadge}>{item.rank || "Rank E"}</ThemedText>
+              <ThemedText style={[styles.userName, index === 0 && { color: '#22d3ee' }]}>
+                {item.username?.toUpperCase() || "PLAYER_UNKNOWN"}
+              </ThemedText>
+              <View style={styles.rankBadgeContainer}>
+                <ThemedText style={styles.userRankBadge}>{item.rank || "RANK_E"}</ThemedText>
+              </View>
             </View>
 
             <View style={styles.statsSection}>
-              <View style={styles.streakContainer}>
-                <Ionicons name="flame" size={16} color="#FF4500" />
-                <ThemedText style={styles.streakText}>{item.streak || 0}</ThemedText>
+              <View style={styles.xpContainer}>
+                <ThemedText style={styles.xpValue}>{item.xp}</ThemedText>
+                <ThemedText style={styles.xpLabel}>XP</ThemedText>
               </View>
-              <ThemedText style={styles.xpText}>{item.xp} XP</ThemedText>
+              <View style={styles.streakRow}>
+                <Ionicons name="flame-sharp" size={10} color="#ef4444" />
+                <ThemedText style={styles.streakValue}>{item.streak || 0}</ThemedText>
+              </View>
             </View>
           </View>
         )}
       />
 
-      {/* Componente do Menu */}
       <DrawerMenu visible={showDrawer} onClose={() => setShowDrawer(false)} />
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor:Colors.charcoal, paddingHorizontal: 20 },
-  loadingContainer: { flex: 1, backgroundColor: '#020617', justifyContent: 'center', alignItems: 'center' },
-  menuButton: { marginTop: 50, marginBottom: 10, alignSelf: 'flex-start' },
+  container: { flex: 1 },
+  loadingContainer: { flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' },
   
-  header: { alignItems: 'center', marginBottom: 25 },
-  headerTitle: { color: '#FFD700', fontSize: 22, fontWeight: '900', letterSpacing: 2 },
-  headerSub: { color: '#64748b', fontSize: 12, marginTop: 4 },
+  topBar: { flexDirection: 'row', alignItems: 'center', marginTop: 50, paddingHorizontal: 20, marginBottom: 20 },
+  menuBox: { width: 45, height: 45, borderWidth: 1, borderColor: 'rgba(34, 211, 238, 0.3)', justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(34, 211, 238, 0.05)' },
+  headerTag: { color: '#22d3ee', fontSize: 9, fontWeight: '900', letterSpacing: 2, marginLeft: 15 },
+
+  header: { alignItems: 'center', marginBottom: 30 },
+  headerTitle: { color: '#fff', fontSize: 20, fontWeight: '900', letterSpacing: 4, fontStyle: 'italic' },
+  separator: { width: 40, height: 2, backgroundColor: '#22d3ee', marginVertical: 8 },
+  headerSub: { color: '#475569', fontSize: 9, fontWeight: '900', letterSpacing: 1 },
 
   userCard: { 
     flexDirection: 'row', 
     alignItems: 'center', 
-    backgroundColor: '#0f172a', 
-    padding: 16, 
-    borderRadius: 20, 
-    marginBottom: 12,
+    backgroundColor: 'rgba(15, 23, 42, 0.4)', 
+    padding: 18, 
+    borderRadius: 2, 
+    marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#1e293b'
+    borderColor: 'rgba(34, 211, 238, 0.05)',
+    position: 'relative',
+    overflow: 'hidden'
   },
   topThreeCard: {
-    borderColor: '#FFD700',
-    backgroundColor: '#1e293b',
-    elevation: 5,
-    shadowColor: '#FFD700',
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
+    backgroundColor: 'rgba(15, 23, 42, 0.8)',
+    borderColor: 'rgba(34, 211, 238, 0.2)',
   },
-  rankSection: { width: 45, alignItems: 'center' },
-  rankNumber: { color: '#475569', fontWeight: '900', fontSize: 18 },
+  firstPlaceBorder: {
+    borderColor: '#22d3ee',
+    borderLeftWidth: 4,
+  },
+  cardGlow: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   
-  userInfo: { flex: 1, marginLeft: 10 },
-  userName: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-  userRankBadge: { color: '#94a3b8', fontSize: 10, textTransform: 'uppercase', marginTop: 2 },
+  rankSection: { width: 40, alignItems: 'center' },
+  rankNumber: { color: '#475569', fontWeight: '900', fontSize: 14, fontStyle: 'italic' },
+  
+  userInfo: { flex: 1, marginLeft: 15 },
+  userName: { color: '#fff', fontWeight: '900', fontSize: 14, letterSpacing: 1 },
+  rankBadgeContainer: { marginTop: 4 },
+  userRankBadge: { color: '#475569', fontSize: 8, fontWeight: '900', letterSpacing: 1 },
   
   statsSection: { alignItems: 'flex-end' },
-  streakContainer: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 },
-  streakText: { color: '#FF4500', fontWeight: 'bold', fontSize: 14 },
-  xpText: { color: '#FFD700', fontSize: 12, fontWeight: '800' }
+  xpContainer: { flexDirection: 'row', alignItems: 'baseline', gap: 3 },
+  xpValue: { color: '#22d3ee', fontWeight: '900', fontSize: 16, fontStyle: 'italic' },
+  xpLabel: { color: '#22d3ee', fontSize: 8, fontWeight: '900' },
+  streakRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+  streakValue: { color: '#ef4444', fontWeight: '900', fontSize: 10 }
 });

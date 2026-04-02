@@ -5,10 +5,8 @@ import { useRouter } from 'expo-router';
 import { ThemedText } from './themed-text';
 import { getAuth, signOut, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, doc, onSnapshot } from 'firebase/firestore';
-import iconSet from '@expo/vector-icons/build/Fontisto';
 
-
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 interface DrawerMenuProps {
   visible: boolean;
@@ -20,7 +18,7 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
   const auth = getAuth();
   const db = getFirestore();
   const [userData, setUserData] = useState<any>(null);
-  const [slideAnim] = React.useState(new Animated.Value(-300));
+  const [slideAnim] = React.useState(new Animated.Value(-width * 0.8));
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -35,33 +33,25 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
   }, []);
 
   useEffect(() => {
-    if (visible) {
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: false,
-      }).start();
-    } else {
-      Animated.timing(slideAnim, {
-        toValue: -300,
-        duration: 300,
-        useNativeDriver: false,
-      }).start();
-    }
+    Animated.timing(slideAnim, {
+      toValue: visible ? 0 : -width * 0.8,
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
   }, [visible]);
 
   const menuItems = [
-    { label: 'Início', icon: 'home', route: '/(tabs)', emoji: '🏠' },
-    { label: 'Treinos', icon: 'dumbbell', route: '/(tabs)/treinos', emoji: '🏋️' },
-    { label: 'Ranking', icon: 'trophy', route: '/(tabs)/Ranking', emoji: '👑' },
-    { label: 'Cronômetro', icon: 'timer', route: '/(tabs)/cronometro', emoji: '⏱️' },
-    { label: 'Dieta', icon: 'nutrition', route: '/(tabs)/dieta', emoji: '🥗' },
-    { label: 'Pesquisa', icon: 'search', route: '/(tabs)/pesquisa', emoji: '🔍' },
-    { label: 'Explorar', icon: 'compass', route: '/(tabs)/explore', emoji: '🗺️' },
-    { label: 'Ponto', icon: 'location', route: '/(tabs)/ponto', emoji: '📍' },
-    { label: 'Perfil', icon: 'trophy', route: '/(tabs)/gamificacao', emoji: '👤' },
-    { label: 'Perfil', icon: 'trophy', route: '/(tabs)/ContrataAssinatura', emoji: '👤' },
-    { label: 'Configurações', icon: 'settings', route: '/(tabs)/config', emoji: '⚙️' },
+    { label: 'DASHBOARD_PRINCIPAL', icon: 'grid-outline', route: '/(tabs)' },
+    { label: 'GRIMÓRIO_DE_TREINOS', icon: 'barbell-outline', route: '/(tabs)/treinos' },
+    { label: 'RANKING_MONARCAS', icon: 'trophy-outline', route: '/(tabs)/Ranking' },
+    { label: 'TEMPORIZADOR_OS', icon: 'timer-outline', route: '/(tabs)/cronometro' },
+    { label: 'PROTOCOLO_DIETÉTICO', icon: 'flask-outline', route: '/(tabs)/dieta' },
+    { label: 'BUSCA_DE_SISTEMA', icon: 'search-outline', route: '/(tabs)/pesquisa' },
+    { label: 'EXPLORAÇÃO_MAPA', icon: 'map-outline', route: '/(tabs)/explore' },
+    { label: 'TERMINAL_DE_PONTO', icon: 'location-outline', route: '/(tabs)/ponto' },
+    { label: 'PERFIL_OPERADOR', icon: 'person-outline', route: '/(tabs)/gamificacao' },
+    { label: 'REGISTROS_PR', icon: 'medal-outline', route: '/(tabs)/ContrataAssinatura' },
+    { label: 'CONFIG_NÚCLEO', icon: 'settings-outline', route: '/(tabs)/config' },
   ];
 
   const handleLogout = () => {
@@ -76,95 +66,75 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
   };
 
   return (
-    <Modal visible={visible} animationType="none" transparent={true}>
+    <Modal visible={visible} transparent={true} animationType="none">
       <View style={styles.container}>
-        {/* Overlay para fechar ao clicar fora */}
         <TouchableOpacity 
           style={styles.overlay} 
-          onPress={onClose}
-          activeOpacity={1}
+          onPress={onClose} 
+          activeOpacity={1} 
         />
 
-        {/* Menu Drawer */}
         <Animated.View style={[styles.drawer, { left: slideAnim }]}>
-          {/* Header com Usuário */}
+          {/* USER_IDENTITY_SECTION */}
           <View style={styles.drawerHeader}>
             <View style={styles.userContainer}>
-              <View style={styles.avatarCircle}>
+              <View style={styles.avatarBox}>
                 <ThemedText style={styles.avatarText}>
                   {userData?.username?.charAt(0).toUpperCase() || 'U'}
                 </ThemedText>
               </View>
               <View style={styles.userInfo}>
                 <ThemedText style={styles.userName}>
-                  {userData?.username || 'Usuário'}
+                  {userData?.username?.toUpperCase() || 'OPERADOR_NULL'}
                 </ThemedText>
                 <ThemedText style={styles.userRank}>
-                  {userData?.rank || 'Novato'} • Nível {userData?.level || 1}
+                  {userData?.rank?.toUpperCase() || 'NOVATO'} // LVL_{userData?.level || 1}
                 </ThemedText>
               </View>
             </View>
-            <TouchableOpacity onPress={onClose}>
-              <Ionicons name="close-circle" size={32} color="#FFD700" />
+            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+              <Ionicons name="chevron-back-outline" size={20} color="#22d3ee" />
             </TouchableOpacity>
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollContent}>
-            {/* Seção de Navegação */}
             <View style={styles.section}>
-              <ThemedText style={styles.sectionTitle}>NAVEGAÇÃO</ThemedText>
-              {menuItems.map((item, index) => (
+              <ThemedText style={styles.sectionTitle}>MÓDULOS_DE_ACESSO</ThemedText>
+              {menuItems.map((item) => (
                 <TouchableOpacity
                   key={item.label}
                   style={styles.menuItem}
                   onPress={() => handleNavigation(item.route)}
-                  activeOpacity={0.7}
                 >
-                  <View style={styles.menuIconContainer}>
-                    <ThemedText style={styles.emoji}>{item.emoji}</ThemedText>
-                  </View>
+                  <Ionicons name={item.icon as any} size={20} color="#22d3ee" style={styles.menuIcon} />
                   <ThemedText style={styles.menuLabel}>{item.label}</ThemedText>
-                  <Ionicons name="chevron-forward" size={16} color="#64748b" />
+                  <View style={styles.activeIndicator} />
                 </TouchableOpacity>
               ))}
             </View>
 
-            {/* Seção de Informações */}
-            <View style={styles.section}>
-              <ThemedText style={styles.sectionTitle}>INFORMAÇÕES</ThemedText>
-              <View style={styles.infoBox}>
-                <View style={styles.infoItem}>
-                  <Ionicons name="sparkles" size={18} color="#FFD700" />
-                  <View>
-                    <ThemedText style={styles.infoLabel}>XP</ThemedText>
-                    <ThemedText style={styles.infoValue}>
-                      {userData?.xp || 0} / 1000
-                    </ThemedText>
-                  </View>
+            {/* STATUS_BAR_SECTION */}
+            <View style={styles.statusSection}>
+              <ThemedText style={styles.sectionTitle}>STATUS_DO_NÚCLEO</ThemedText>
+              <View style={styles.statusBox}>
+                <View style={styles.statusItem}>
+                  <ThemedText style={styles.statusLabel}>XP_PROGRESS</ThemedText>
+                  <ThemedText style={styles.statusValue}>{userData?.xp || 0} / 1000</ThemedText>
+                  <View style={styles.progressBar}><View style={[styles.progressFill, { width: `${(userData?.xp / 1000) * 100}%` }]} /></View>
                 </View>
-                <View style={styles.infoDivider} />
-                <View style={styles.infoItem}>
-                  <Ionicons name="flash" size={18} color="#FFD700" />
-                  <View>
-                    <ThemedText style={styles.infoLabel}>Moedas</ThemedText>
-                    <ThemedText style={styles.infoValue}>
-                      {userData?.moedas || 0}
-                    </ThemedText>
-                  </View>
+                <View style={styles.statusItem}>
+                  <ThemedText style={styles.statusLabel}>CRÉDITOS_GENESYS</ThemedText>
+                  <ThemedText style={styles.statusValue}>$ {userData?.moedas || 0}</ThemedText>
                 </View>
               </View>
             </View>
           </ScrollView>
 
-          {/* Botão de Sair */}
-          <View style={styles.logoutContainer}>
-            <TouchableOpacity 
-              style={styles.logoutItem} 
-              onPress={handleLogout}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="log-out" size={20} color="#ff6b6b" />
-              <ThemedText style={styles.logoutLabel}>Sair</ThemedText>
+          {/* DISCONNECT_SECTION */}
+          <View style={styles.footer}>
+            <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+              <Ionicons name="power-outline" size={18} color="#f43f5e" />
+              <ThemedText style={styles.logoutText}>DESCONECTAR_SISTEMA</ThemedText>
             </TouchableOpacity>
           </View>
         </Animated.View>
@@ -174,172 +144,76 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    flexDirection: 'row',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: 'transparent',
-  },
+  container: { flex: 1, flexDirection: 'row' },
+  overlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.85)' },
   drawer: {
-    width: '80%',
-    backgroundColor: '#0f172a',
-    borderRightWidth: 2,
-    borderRightColor: '#FFD700',
-    paddingTop: -10,
-    flexDirection: 'column',
+    width: '82%',
+    backgroundColor: '#020617',
+    borderRightWidth: 1,
+    borderRightColor: 'rgba(34, 211, 238, 0.2)',
+    height: '100%',
   },
-  
-  /* HEADER COM USUÁRIO */
   drawerHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 20,
-    paddingBottom: 20,
-    borderBottomWidth: 2,
-    borderBottomColor: '#1e293b',
-  },
-  userContainer: {
+    paddingTop: 60,
+    paddingBottom: 25,
+    paddingHorizontal: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    flex: 1,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(34, 211, 238, 0.1)',
   },
-  avatarCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#FFD700',
+  userContainer: { flexDirection: 'row', alignItems: 'center', flex: 1, gap: 15 },
+  avatarBox: {
+    width: 50,
+    height: 50,
+    borderWidth: 1,
+    borderColor: '#22d3ee',
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(34, 211, 238, 0.05)',
   },
-  avatarText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#0f172a',
-  },
-  userInfo: {
-    flex: 1,
-  },
-  userName: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  userRank: {
-    fontSize: 12,
-    color: '#FFD700',
-    marginTop: 2,
-  },
+  avatarText: { color: '#22d3ee', fontSize: 20, fontWeight: '900' },
+  userInfo: { flex: 1 },
+  userName: { color: '#fff', fontSize: 14, fontWeight: '900', letterSpacing: 1 },
+  userRank: { color: '#22d3ee', fontSize: 9, fontWeight: 'bold', marginTop: 4, opacity: 0.7 },
+  closeBtn: { padding: 8, borderWidth: 1, borderColor: 'rgba(34, 211, 238, 0.2)' },
 
-  /* CONTEÚDO SCROLL */
-  scrollContent: {
-    flex: 1,
-    paddingTop: 8,
-  },
-  section: {
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    bottom: 23,
-    marginBottom: 8,
-  },
-  sectionTitle: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    color: '#64748b',
-    letterSpacing: 1,
-    paddingHorizontal: 8,
-    marginBottom: 8,
-    textTransform: 'uppercase',
-  },
-
-  /* ITEM MENU */
+  scrollContent: { flex: 1, padding: 15 },
+  section: { marginBottom: 30 },
+  sectionTitle: { color: '#475569', fontSize: 9, fontWeight: '900', letterSpacing: 2, marginBottom: 15, marginLeft: 5 },
+  
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    gap: 12,
-    marginVertical: 4,
-    borderRadius: 12,
-    backgroundColor: '#1e293b',
-    marginHorizontal: 8,
-  },
-  menuIconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255, 215, 0, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emoji: {
-    fontSize: 18,
-  },
-  menuLabel: {
-    fontSize: 14,
-    color: '#fff',
-    fontWeight: '500',
-    flex: 1,
-  },
-
-  /* INFO BOX */
-  infoBox: {
-    backgroundColor: '#1e293b',
-    borderRadius: 12,
-    padding: 12,
-    marginHorizontal: 8,
-    flexDirection: 'row',
-    gap: 12,
-  },
-  infoItem: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  infoDivider: {
-    width: 1,
-    backgroundColor: '#334155',
-  },
-  infoLabel: {
-    fontSize: 11,
-    color: '#64748b',
-    fontWeight: '600',
-  },
-  infoValue: {
-    fontSize: 14,
-    color: '#FFD700',
-    fontWeight: 'bold',
-    marginTop: 2,
-  },
-
-  /* LOGOUT */
-  logoutContainer: {
-    borderTopWidth: 2,
-    borderTopColor: '#1e293b',
-    paddingHorizontal: 12,
-    bottom: 23,
-    paddingVertical: 12,
-  },
-  logoutItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    gap: 12,
-    backgroundColor: 'rgba(255, 107, 107, 0.1)',
-    borderRadius: 12,
+    paddingVertical: 15,
+    paddingHorizontal: 15,
+    marginBottom: 8,
+    backgroundColor: 'rgba(15, 23, 42, 0.5)',
     borderWidth: 1,
-    borderColor: '#ff6b6b',
+    borderColor: 'rgba(34, 211, 238, 0.03)',
   },
-  logoutLabel: {
-    fontSize: 14,
-    color: '#ff6b6b',
-    fontWeight: '600',
+  menuIcon: { marginRight: 15, opacity: 0.8 },
+  menuLabel: { color: '#94a3b8', fontSize: 11, fontWeight: '900', letterSpacing: 1, flex: 1 },
+  activeIndicator: { width: 4, height: 4, backgroundColor: '#22d3ee', borderRadius: 2, opacity: 0.3 },
+
+  statusSection: { marginBottom: 20 },
+  statusBox: { backgroundColor: 'rgba(255,255,255,0.02)', padding: 15, borderWidth: 1, borderColor: 'rgba(34, 211, 238, 0.05)' },
+  statusItem: { marginBottom: 15 },
+  statusLabel: { color: '#475569', fontSize: 8, fontWeight: '900', marginBottom: 5 },
+  statusValue: { color: '#fff', fontSize: 12, fontWeight: 'bold' },
+  progressBar: { height: 2, backgroundColor: '#1e293b', marginTop: 8, overflow: 'hidden' },
+  progressFill: { height: '100%', backgroundColor: '#22d3ee' },
+
+  footer: { padding: 20, borderTopWidth: 1, borderTopColor: 'rgba(34, 211, 238, 0.1)' },
+  logoutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(244, 63, 94, 0.2)',
+    backgroundColor: 'rgba(244, 63, 94, 0.05)',
   },
+  logoutText: { color: '#f43f5e', fontSize: 10, fontWeight: '900', letterSpacing: 1 },
 });

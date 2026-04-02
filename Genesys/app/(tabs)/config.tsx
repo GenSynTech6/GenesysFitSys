@@ -1,9 +1,11 @@
-import { ScrollView, StyleSheet, View, Text, Switch, TouchableOpacity, Alert } from 'react-native';
+import { ScrollView, StyleSheet, View, Text, Switch, TouchableOpacity, Alert, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { getAuth, signOut } from "firebase/auth";
+import { LinearGradient } from "expo-linear-gradient";
 import { DrawerMenu } from '../../components/drawer-menu';
-import { Colors } from '../../constants/colors';
+
+const { width } = Dimensions.get('window');
 
 export default function ConfigScreen() {
     const [notificationsEnabled, setNotificationsEnabled] = useState(true);
@@ -14,159 +16,189 @@ export default function ConfigScreen() {
     const auth = getAuth();
 
     const handleLogout = () => {
-        Alert.alert("Sair", "Deseja encerrar sua sessão no Sistema?", [
-            { text: "Cancelar", style: "cancel" },
-            { text: "Sair", onPress: () => signOut(auth), style: "destructive" }
+        Alert.alert("[ SISTEMA ]", "DESEJA ENCERRAR A CONEXÃO COM O PORTAL?", [
+            { text: "CANCELAR", style: "cancel" },
+            { text: "SAIR", onPress: () => signOut(auth), style: "destructive" }
         ]);
     };
 
     return (
-        <View style={styles.mainContainer}>
+        <LinearGradient colors={["#000000", "#020617"]} style={styles.mainContainer}>
             <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 50 }}>
-                {/* Cabeçalho */}
+                
+                {/* HEADER SISTEMA */}
                 <View style={styles.header}>
-                    <TouchableOpacity onPress={() => setShowDrawer(true)}>
-                        <Ionicons name="menu" size={38} color={Colors.gold} />
+                    <TouchableOpacity onPress={() => setShowDrawer(true)} style={styles.menuIcon}>
+                        <Ionicons name="grid-outline" size={24} color="#22d3ee" />
                     </TouchableOpacity>
-                    <Text style={styles.headerTitle}>CONFIGURAÇÕES</Text>
-                    <View style={{ width: 32 }} /> 
+                    <Text style={styles.headerTitle}>AJUSTES_DE_SISTEMA</Text>
+                    <View style={styles.headerLine} />
                 </View>
 
                 {/* Seção: Interface */}
-                <Text style={styles.sectionHeader}>INTERFACE DO SISTEMA</Text>
-                <View style={styles.card}>
+                <Text style={styles.sectionHeader}>// INTERFACE_VISUAL</Text>
+                <View style={styles.systemBox}>
                     <View style={styles.settingItem}>
                         <View style={styles.settingLabel}>
-                            <Ionicons name="moon" size={20} color={Colors.gold} />
-                            <Text style={styles.settingText}>Modo Escuro (Sempre Ativo)</Text>
+                            <Ionicons name="moon-sharp" size={18} color="#22d3ee" />
+                            <Text style={styles.settingText}>MODO SOMBRA (ALWAYS ON)</Text>
                         </View>
                         <Switch 
                             value={darkMode} 
-                            trackColor={{ false: "#333", true: Colors.gold }}
-                            thumbColor={"#fff"}
+                            trackColor={{ false: "#0f172a", true: "#22d3ee" }}
+                            thumbColor={darkMode ? "#fff" : "#475569"}
                             onValueChange={setDarkMode} 
                         />
                     </View>
 
-                    <View style={styles.settingItem}>
+                    <View style={[styles.settingItem, { borderBottomWidth: 0 }]}>
                         <View style={styles.settingLabel}>
-                            <Ionicons name="notifications" size={20} color={Colors.gold} />
-                            <Text style={styles.settingText}>Notificações de Missão</Text>
+                            <Ionicons name="notifications-sharp" size={18} color="#22d3ee" />
+                            <Text style={styles.settingText}>ALERTAS DE MISSÃO</Text>
                         </View>
                         <Switch
                             value={notificationsEnabled}
-                            trackColor={{ false: "#333", true: Colors.gold }}
-                            thumbColor={"#fff"}
+                            trackColor={{ false: "#0f172a", true: "#22d3ee" }}
+                            thumbColor={notificationsEnabled ? "#fff" : "#475569"}
                             onValueChange={setNotificationsEnabled}
                         />
                     </View>
                 </View>
 
                 {/* Seção: Dados */}
-                <Text style={styles.sectionHeader}>SINCRONIZAÇÃO</Text>
-                <View style={styles.card}>
-                    <View style={styles.settingItem}>
+                <Text style={styles.sectionHeader}>// SINCRONIZAÇÃO_DE_DADOS</Text>
+                <View style={styles.systemBox}>
+                    <View style={[styles.settingItem, { borderBottomWidth: 0 }]}>
                         <View style={styles.settingLabel}>
-                            <Ionicons name="cloud-upload" size={20} color={Colors.gold} />
-                            <Text style={styles.settingText}>Auto-Sincronizar XP</Text>
+                            <Ionicons name="sync-sharp" size={18} color="#22d3ee" />
+                            <Text style={styles.settingText}>AUTO-SYNC XP & STATUS</Text>
                         </View>
                         <Switch 
                             value={autoSync} 
-                            trackColor={{ false: "#333", true: Colors.gold }}
-                            thumbColor={"#fff"}
+                            trackColor={{ false: "#0f172a", true: "#22d3ee" }}
+                            thumbColor={autoSync ? "#fff" : "#475569"}
                             onValueChange={setAutoSync} 
                         />
                     </View>
                 </View>
 
                 {/* Ações da Conta */}
-                <Text style={styles.sectionHeader}>CONTA DO JOGADOR</Text>
+                <Text style={styles.sectionHeader}>// AUTENTICAÇÃO</Text>
                 <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-                    <Ionicons name="log-out" size={20} color="#ff4444" />
-                    <Text style={styles.logoutText}>Encerrar Sessão</Text>
+                    <Ionicons name="power-sharp" size={20} color="#ef4444" />
+                    <Text style={styles.logoutText}>ENCERRAR SESSÃO DO JOGADOR</Text>
                 </TouchableOpacity>
 
                 <View style={styles.versionContainer}>
-                    <Text style={styles.versionText}>GenesysFit v1.0.4 - SDK 54</Text>
+                    <Text style={styles.versionText}>BUILD: GENESYS_FIT_V1.0.4 [STABLE]</Text>
+                    <View style={styles.scanLine} />
                 </View>
             </ScrollView>
 
             <DrawerMenu visible={showDrawer} onClose={() => setShowDrawer(false)} />
-        </View>
+        </LinearGradient>
     );
 }
 
 const styles = StyleSheet.create({
-    mainContainer: { flex: 1, backgroundColor: Colors.charcoal },
-    container: { flex: 1, padding: 20 },
+    mainContainer: { flex: 1 },
+    container: { flex: 1, paddingHorizontal: 25 },
     header: {
+        marginTop: 60,
+        marginBottom: 40,
         flexDirection: 'row',
-        justifyContent: 'space-between',
         alignItems: 'center',
-        marginTop: 40,
-        marginBottom: 30
+        gap: 15
+    },
+    menuIcon: {
+        width: 45,
+        height: 45,
+        borderWidth: 1,
+        borderColor: 'rgba(34, 211, 238, 0.3)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(34, 211, 238, 0.05)'
     },
     headerTitle: {
-        color: Colors.gold,
+        color: '#fff',
         fontSize: 18,
         fontWeight: '900',
-        letterSpacing: 2
+        letterSpacing: 3,
+        fontStyle: 'italic'
+    },
+    headerLine: {
+        flex: 1,
+        height: 1,
+        backgroundColor: 'rgba(34, 211, 238, 0.2)',
+        marginLeft: 10
     },
     sectionHeader: {
-        color: '#666',
-        fontSize: 12,
-        fontWeight: 'bold',
-        marginBottom: 10,
-        marginLeft: 5,
-        letterSpacing: 1
+        color: '#22d3ee',
+        fontSize: 10,
+        fontWeight: '900',
+        marginBottom: 12,
+        letterSpacing: 2,
+        opacity: 0.8
     },
-    card: {
-        backgroundColor: '#1a1a1a',
-        borderRadius: 15,
-        paddingHorizontal: 15,
-        marginBottom: 25,
+    systemBox: {
+        backgroundColor: 'rgba(15, 23, 42, 0.5)',
         borderWidth: 1,
-        borderColor: '#333'
+        borderColor: 'rgba(34, 211, 238, 0.15)',
+        marginBottom: 30,
+        paddingHorizontal: 15,
     },
     settingItem: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingVertical: 15,
+        paddingVertical: 18,
         borderBottomWidth: 1,
-        borderBottomColor: '#252525'
+        borderBottomColor: 'rgba(34, 211, 238, 0.05)'
     },
     settingLabel: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 12
+        gap: 15
     },
     settingText: {
-        fontSize: 15,
-        color: '#fff',
+        fontSize: 12,
+        color: '#e2e8f0',
+        fontWeight: '700',
+        letterSpacing: 1
     },
     logoutButton: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 10,
-        backgroundColor: '#1a1a1a',
-        padding: 15,
-        borderRadius: 15,
+        gap: 12,
+        backgroundColor: 'rgba(239, 68, 68, 0.05)',
+        padding: 18,
         borderWidth: 1,
-        borderColor: '#421a1a'
+        borderColor: 'rgba(239, 68, 68, 0.3)',
+        marginTop: 5
     },
     logoutText: {
-        color: '#ff4444',
-        fontWeight: 'bold',
-        fontSize: 16
+        color: '#ef4444',
+        fontWeight: '900',
+        fontSize: 11,
+        letterSpacing: 1
     },
     versionContainer: {
-        marginTop: 40,
-        alignItems: 'center'
+        marginTop: 60,
+        alignItems: 'center',
+        opacity: 0.4
     },
     versionText: {
-        color: '#444',
-        fontSize: 12
+        color: '#22d3ee',
+        fontSize: 9,
+        fontWeight: 'bold',
+        letterSpacing: 2
+    },
+    scanLine: {
+        width: 100,
+        height: 1,
+        backgroundColor: '#22d3ee',
+        marginTop: 5,
+        opacity: 0.5
     }
 });
