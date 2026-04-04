@@ -13,7 +13,7 @@ import { DrawerMenu } from '@/components/drawer-menu';
 
 const { width } = Dimensions.get('window');
 
-// Lógica de Rank Sincronizada
+// Lógica de Rank Sincronizada (Solo Leveling Style)
 const RANK_SYSTEM = [
   { min: 1, max: 5, name: "APRENDIZ" },
   { min: 6, max: 10, name: "RANK E" },
@@ -52,6 +52,12 @@ export default function HomePage() {
     return RANK_SYSTEM.find(r => nivel >= r.min && nivel <= r.max)?.name || 'MONARCA';
   }, [userData?.level, isVip]);
 
+  // PROGRESSÃO DE MASSA (ALVO DO SISTEMA: 80KG)
+  const pesoAtual = parseFloat(userData?.peso) || 0;
+  const metaPeso = 80;
+  const progressoPeso = Math.min((pesoAtual / metaPeso) * 100, 100);
+
+  // LISTENER DO FIREBASE
   useEffect(() => {
     if (auth.currentUser) {
       const unsub = onSnapshot(doc(db, "users", auth.currentUser.uid), (snapshot) => {
@@ -66,13 +72,34 @@ export default function HomePage() {
     }
   }, [userData?.xp]);
 
+  // PROTOCOLO DE RASTREIO TEMPORAL (CRONÔMETRO)
+  useEffect(() => {
+    let interval: number;
+    if (isTraining) {
+      interval = setInterval(() => {
+        setSeconds(prev => prev + 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isTraining]);
+
   const handleLevelUp = async (currentLevel: number, currentXp: number) => {
     const userRef = doc(db, "users", auth.currentUser!.uid);
     await updateDoc(userRef, {
       level: increment(1),
       xp: currentXp - xpLimite,
+      availablePoints: increment(3) // +3 Pontos de Atributo ao subir de nível
     });
-    Alert.alert("[ SISTEMA ]", "EVOLUÇÃO DETECTADA. NÍVEL AUMENTADO.");
+    Alert.alert("[ SISTEMA ]", "EVOLUÇÃO DETECTADA. NÍVEL AUMENTADO. +3 PONTOS DE ATRIBUTO.");
+  };
+
+  const gastarPonto = async (atributo: string) => {
+    if (!userData?.availablePoints || userData.availablePoints <= 0) return;
+    const userRef = doc(db, "users", auth.currentUser!.uid);
+    await updateDoc(userRef, {
+      [`attr_${atributo}`]: increment(1),
+      availablePoints: increment(-1)
+    });
   };
 
   const handleAiConsult = async () => {
@@ -97,7 +124,7 @@ export default function HomePage() {
   };
 
   const finishWorkout = async () => {
-    if (seconds < 60) return Alert.alert("[ AVISO ]", "TEMPO DE MISSÃO INSUFICIENTE.");
+    if (seconds < 60) return Alert.alert("[ AVISO ]", "TEMPO DE MISSÃO INSUFICIENTE. MÍNIMO 1 MINUTO.");
     setIsTraining(false);
     setSaving(true);
     try {
@@ -146,7 +173,7 @@ export default function HomePage() {
           </View>
         </View>
 
-        {/* NÚCLEO DE EVOLUÇÃO */}
+        {/* NÚCLEO DE EVOLUÇÃO (XP) */}
         <View style={styles.levelCard}>
           <LinearGradient colors={['rgba(34, 211, 238, 0.1)', 'transparent']} style={styles.cardGlow} />
           <View style={styles.levelHeader}>
@@ -163,19 +190,51 @@ export default function HomePage() {
           <ThemedText style={styles.levelText}>NÍVEL ATUAL: {userData?.level || 1}</ThemedText>
         </View>
 
-        {/* GRID DE BIOMETRIA */}
-        <View style={styles.statusGrid}>
+        {/* STATUS DE ATRIBUTOS (RPG) */}
+        <View style={styles.attrHeader}>
+            <ThemedText style={styles.sectionHeader}>// ATRIBUTOS_DO_MONARCA</ThemedText>
+            {userData?.availablePoints > 0 && (
+                <ThemedText style={styles.pointsAlert}>+ {userData.availablePoints} PTS DISPONÍVEIS</ThemedText>
+            )}
+        </View>
+        <View style={styles.attrGrid}>
           {[
-            { label: 'BIOTIPO', val: userData?.biotipo || 'N/A', icon: 'body-sharp' },
-            { label: 'PESO_KG', val: `${userData?.peso || '0'}`, icon: 'fitness-sharp' },
-            { label: 'ALTURA_M', val: `${userData?.altura || '0'}`, icon: 'barcode-sharp' }
-          ].map((item, i) => (
-            <View key={i} style={styles.statBox}>
-              <Ionicons name={item.icon as any} size={18} color="#22d3ee" />
-              <ThemedText style={styles.statValue}>{item.val}</ThemedText>
-              <ThemedText style={styles.statLabel}>{item.label}</ThemedText>
+            { id: 'str', label: 'FORÇA', val: userData?.attr_str || 10, color: '#ef4444', icon: 'barbell-outline' },
+            { id: 'agi', label: 'AGILIDADE', val: userData?.attr_agi || 10, color: '#22d3ee', icon: 'speedometer-outline' },
+            { id: 'vit', label: 'VITALIDADE', val: userData?.attr_vit || 10, color: '#22c55e', icon: 'heart-outline' },
+          ].map((attr, i) => (
+            <View key={i} style={[styles.attrCard, { borderColor: attr.color + '44' }]}>
+              <Ionicons name={attr.icon as any} size={16} color={attr.color} />
+              <View style={{ flex: 1 }}>
+                <ThemedText style={styles.attrVal}>{attr.val}</ThemedText>
+                <ThemedText style={styles.attrLabel}>{attr.label}</ThemedText>
+              </View>
+              {userData?.availablePoints > 0 && (
+                <TouchableOpacity onPress={() => gastarPonto(attr.id)}>
+                    <Ionicons name="add-circle-outline" size={20} color={attr.color} />
+                </TouchableOpacity>
+              )}
             </View>
           ))}
+        </View>
+
+        {/* GRID DE BIOMETRIA & META DE BULKING */}
+        <View style={styles.statusGrid}>
+          <View style={styles.statBox}>
+            <Ionicons name="body-sharp" size={18} color="#22d3ee" />
+            <ThemedText style={styles.statValue}>{userData?.biotipo || 'N/A'}</ThemedText>
+            <ThemedText style={styles.statLabel}>BIOTIPO</ThemedText>
+          </View>
+          <View style={styles.statBoxWeight}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%' }}>
+                <ThemedText style={styles.statLabel}>MASSA CORPORAL</ThemedText>
+                <ThemedText style={styles.statLabel}>META: {metaPeso}KG</ThemedText>
+            </View>
+            <ThemedText style={styles.statValueBig}>{pesoAtual} KG</ThemedText>
+            <View style={styles.weightTrack}>
+                 <View style={[styles.weightFill, { width: `${progressoPeso}%` }]} />
+            </View>
+          </View>
         </View>
 
         {/* MISSÃO DIÁRIA */}
@@ -230,7 +289,14 @@ export default function HomePage() {
             <TouchableOpacity style={styles.saveBtn} onPress={async () => {
               const p = parseFloat(peso.replace(',', '.'));
               const a = parseFloat(altura.replace(',', '.'));
-              await updateDoc(doc(db, "users", auth.currentUser!.uid), { peso: p, altura: a });
+              await updateDoc(doc(db, "users", auth.currentUser!.uid), { 
+                  peso: p, 
+                  altura: a,
+                  attr_str: 10,
+                  attr_agi: 10,
+                  attr_vit: 10,
+                  availablePoints: 0
+              });
               setShowWelcome(false);
             }}>
               <ThemedText style={styles.saveBtnText}>VINCULAR AO SISTEMA</ThemedText>
@@ -246,7 +312,7 @@ export default function HomePage() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
-  scrollContent: { padding: 25, paddingTop: 60 },
+  scrollContent: { padding: 25, paddingTop: 60, paddingBottom: 100 },
   
   header: { flexDirection: 'row', alignItems: 'center', marginBottom: 30 },
   menuBox: { width: 45, height: 45, borderWidth: 1, borderColor: 'rgba(34, 211, 238, 0.3)', justifyContent: 'center', alignItems: 'center' },
@@ -265,13 +331,24 @@ const styles = StyleSheet.create({
   xpFill: { height: '100%' },
   levelText: { color: '#fff', fontSize: 10, fontWeight: '900', textAlign: 'right', opacity: 0.6 },
 
-  statusGrid: { flexDirection: 'row', gap: 10, marginBottom: 30 },
-  statBox: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.3)', padding: 15, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(34, 211, 238, 0.05)' },
-  statValue: { color: '#fff', fontSize: 14, fontWeight: '900', marginTop: 8 },
-  statLabel: { color: '#475569', fontSize: 8, fontWeight: '900', marginTop: 2 },
+  attrHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
+  pointsAlert: { color: '#eab308', fontSize: 9, fontWeight: '900', letterSpacing: 1 },
+  attrGrid: { flexDirection: 'row', gap: 8, marginBottom: 25 },
+  attrCard: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.4)', padding: 10, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  attrVal: { color: '#fff', fontSize: 16, fontWeight: '900' },
+  attrLabel: { color: '#475569', fontSize: 7, fontWeight: '900', letterSpacing: 1 },
 
-  sectionHeader: { color: '#22d3ee', fontSize: 10, fontWeight: '900', letterSpacing: 2, marginBottom: 15 },
-  missionCard: { backgroundColor: '#22d3ee', padding: 20, flexDirection: 'row', alignItems: 'center', borderRadius: 2 },
+  statusGrid: { flexDirection: 'row', gap: 10, marginBottom: 30 },
+  statBox: { flex: 0.35, backgroundColor: 'rgba(15, 23, 42, 0.3)', padding: 15, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(34, 211, 238, 0.05)' },
+  statBoxWeight: { flex: 0.65, backgroundColor: 'rgba(15, 23, 42, 0.3)', padding: 15, borderWidth: 1, borderColor: 'rgba(34, 211, 238, 0.05)', justifyContent: 'center' },
+  statValue: { color: '#fff', fontSize: 14, fontWeight: '900', marginTop: 8 },
+  statValueBig: { color: '#fff', fontSize: 22, fontWeight: '900', marginTop: 5, marginBottom: 10 },
+  statLabel: { color: '#475569', fontSize: 8, fontWeight: '900', marginTop: 2 },
+  weightTrack: { height: 2, backgroundColor: 'rgba(255,255,255,0.1)', width: '100%' },
+  weightFill: { height: '100%', backgroundColor: '#22d3ee' },
+
+  sectionHeader: { color: '#22d3ee', fontSize: 10, fontWeight: '900', letterSpacing: 2 },
+  missionCard: { backgroundColor: '#22d3ee', padding: 20, flexDirection: 'row', alignItems: 'center', borderRadius: 2, marginTop: 15 },
   missionActive: { backgroundColor: '#000', borderWidth: 1, borderColor: '#22d3ee' },
   missionTitle: { color: '#000', fontWeight: '900', fontSize: 16, letterSpacing: 1 },
   missionSub: { color: 'rgba(0,0,0,0.6)', fontSize: 9, fontWeight: '900', marginTop: 4 },

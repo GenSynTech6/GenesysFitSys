@@ -47,12 +47,89 @@ export default function TreinosScreen() {
         }
     }, []);
 
-    const imagensExercicios: Record<string, string> = {
-        "Supino Barra": "https://grandeatleta.com.br/blog/wp-content/uploads/2025/08/supino-inclinado-com-barra-como-fazer.gif",
-        "Supino Halter": "https://www.mundoboaforma.com.br/wp-content/uploads/2020/12/supino-reto-com-halteres.gif",
-        "Peck Deck": "https://i.pinimg.com/originals/a2/12/cd/a212cde8804175ee82be3abe83ca51e3.gif",
-        "Rosca Direta": "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNmN4eXoxbm93bmZid2R4eHh4eHh4eHh4eHh4eHh4eHh4eHh4JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCBhbmRfaWQ9MA/3o7TKMGpxx8y93NAdq/giphy.gif",
+     const imagensExercicios: Record<string, string> = {
+        // ==========================================
+        // 🛡️ PEITO (CHEST)
+        // ==========================================
+        "Supino Barra": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Barbell-Bench-Press.gif",
+        "Supino Halter": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Press.gif",
+        // "Supino Inclinado": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Barbell-Incline-Bench-Press.gif",
+        "Supino Inclinado": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Incline-Dumbbell-Press.gif",
+        "Peck Deck": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Pec-Deck-Fly.gif",
+        "Cross over": "https://treinototal.com.br/wp-content/uploads/2025/07/cross-over-na-polia-alta.gif",
+        "Crucifixo": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Fly.gif",
+        "Flexão": "https://treinototal.com.br/wp-content/uploads/2023/04/flexao-de-bracos.gif",
+        "Pull over": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Pullover.gif",
+
+        // ==========================================
+        // 🦇 COSTAS (BACK)
+        // ==========================================
+        "Puxada com Triângulo": "https://fitnessprogramer.com/wp-content/uploads/2021/02/V-bar-Lat-Pulldown.gif",
+        "Crucifixo Invertido": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Reverse-Pec-Deck-Fly.gif",
+        "Puxada Frente": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Lat-Pulldown.gif",
+        "Remada Baixa": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Seated-Cable-Row.gif",
+        "Remada Unilateral": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Row.gif",
+        "Barra Fixa": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Pull-up.gif",
+        "Levantamento Terra": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Barbell-Deadlift.gif",
+        "pull down": "https://grandeatleta.com.br/blog/wp-content/uploads/2025/01/pull-down.gif",
+        "Remada Curvada": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Barbell-Bent-Over-Row.gif",
+
+        // ==========================================
+        // 🦵 PERNAS & GLÚTEOS (LEGS)
+        // ==========================================
+        "Agachamento": "https://fitnessprogramer.com/wp-content/uploads/2021/02/BARBELL-SQUAT.gif",
+        "Agachamento Búlgaro": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Bulgarian-Split-Squat.gif",
+        "Leg Press": "https://fitnessprogramer.com/wp-content/uploads/2015/11/Leg-Press.gif",
+        "Extensora": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Leg-Extension.gif",
+        "Flexora": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Lying-Leg-Curl.gif",
+        "Cadeira Flexora": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Seated-Leg-Curl.gif",
+        "Cadeira Abdutora": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Seated-Hip-Abduction.gif",
+        "Cadeira Adutora": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Seated-Hip-Adduction.gif",
+        "Stiff": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Romanian-Deadlift.gif",
         "Hip Thrust": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Barbell-Hip-Thrust.gif",
+        "Panturrilha em Pé": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Smith-Machine-Calf-Raise.gif",
+        "Panturrilha Sentado": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Seated-Calf-Raise.gif",
+
+        // ==========================================
+        // 🥥 OMBROS (SHOULDERS)
+        // ==========================================
+        "Desenvolvimento com Halteres": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Shoulder-Press.gif",
+        "Desenvolvimento com Barra": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Barbell-Shoulder-Press.gif",
+        "Elevação Lateral": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Lateral-Raise.gif",
+        "Elevação Frontal": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Front-Raise.gif",
+        "Encolhimento": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Shrug.gif",
+
+        // ==========================================
+        // 💪 BÍCEPS (BICEPS)
+        // ==========================================
+        "Rosca Direta": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Barbell-Curl.gif",
+        "Rosca Alternada": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Curl.gif",
+        "Rosca Martelo": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Hammer-Curl.gif",
+        "Rosca Scott": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Z-Bar-Preacher-Curl.gif",
+        "Rosca Concentrada": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Concentration-Curl.gif",
+        "Rosca Inversa": "https://treinomestre.com.br/wp-content/uploads/2018/08/rosca-inversa-barra-w.gif",
+        // ==========================================
+        // 🐎 TRÍCEPS (TRICEPS)
+        // ==========================================
+        "Tríceps Pulley": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Pushdown.gif",
+        "Tríceps Corda": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Cable-Triceps-Pushdown.gif",
+        "Tríceps Testa": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Skull-Crusher.gif",
+        "Tríceps Francês": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Seated-Dumbbell-Triceps-Extension.gif",
+        "Tríceps Coice": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Kickback.gif",
+        "Mergulho nas Paralelas": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dips.gif",
+
+        // ==========================================
+        // 🧱 ABDÔMEN (CORE)
+        // ==========================================
+        "Abdominal Supra": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Crunch.gif",
+        "Abdominal Infra": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Leg-Raise.gif",
+        "Prancha": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Plank.gif",
+        "Abdominal Máquina": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Machine-Crunch.gif",
+        "Russian Twist": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Russian-Twist.gif",
+
+        // ==========================================
+        // ⚠️ FALLBACK (CASO A IA INVENTE UM NOME)
+        // ==========================================
         "Padrão": "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJueXZueXZueXZueXZueXZueXZueXZueXZueXZueXZueXZueZ3JpZCUyMGZpdG5lc3MlMjBhbmltYXRpb24v/giphy.gif"
     };
 
@@ -128,7 +205,7 @@ export default function TreinosScreen() {
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
                 <Text style={styles.title}>GRIMÓRIO_DE_MISSÕES</Text>
-                
+
                 <View style={styles.sectionHeader}>
                     <Text style={styles.sectionTitle}>REGISTROS_ATIVOS</Text>
                     <TouchableOpacity style={styles.createBtn} onPress={() => setModalCriar(true)}>
@@ -305,7 +382,7 @@ const Counter = ({ label, value, onAdj }: { label: string, value: number, onAdj:
 const styles = StyleSheet.create({
     container: { flex: 1, paddingHorizontal: 20 },
     loading: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    
+
     headerTop: { flexDirection: 'row', alignItems: 'center', marginTop: 50, marginBottom: 20 },
     menuBox: { width: 45, height: 45, borderWidth: 1, borderColor: 'rgba(34, 211, 238, 0.3)', justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(34, 211, 238, 0.05)' },
     headerTag: { color: '#22d3ee', fontSize: 9, fontWeight: '900', letterSpacing: 2, marginLeft: 15 },

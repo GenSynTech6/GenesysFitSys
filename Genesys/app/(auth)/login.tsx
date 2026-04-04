@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  StyleSheet, TextInput, TouchableOpacity, View, 
+  StyleSheet, Text, TextInput, TouchableOpacity, View, 
   ActivityIndicator, Alert, ScrollView, KeyboardAvoidingView, Platform, Dimensions 
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
