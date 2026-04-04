@@ -1,50 +1,80 @@
-# Welcome to your Expo app 👋
+# ⚡ GENESYS_FIT // BIOSYNTECH_OS
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+![Status](https://img.shields.io/badge/STATUS-OPERACIONAL-22d3ee?style=for-the-badge)
+![Rank](https://img.shields.io/badge/SISTEMA-RANK_S-facc15?style=for-the-badge)
+![Platform](https://img.shields.io/badge/PLATAFORMA-EXPO_REACT_NATIVE-000?style=for-the-badge&logo=expo)
 
-## Get started
+> **[ PROTOCOLO_DE_EVOLUÇÃO ]**: Bem-vindo ao núcleo do GenesysFit. Este não é apenas um rastreador de treinos; é a interface de comando para a sua ascensão física e digital.
 
-1. Install dependencies
+---
 
+## 🛠️ NÚCLEO_TECNOLÓGICO
+
+O sistema foi forjado utilizando as tecnologias de ponta do ecossistema mobile:
+
+- **Framework:** [Expo](https://expo.dev) (SDK 50+)
+- **Linguagem:** TypeScript (Tipagem Estrita de Elite)
+- **Backend:** Firebase (Auth, Firestore, Functions)
+- **Estética:** Cyberpunk / Solo Leveling Dark Mode
+- **Estilização:** NativeWind & Expo-Linear-Gradient
+
+---
+
+## 🚀 INICIALIZAR_SISTEMA
+
+Para abrir o portal e começar o desenvolvimento, execute os seguintes comandos no seu terminal:
+
+1. **Sincronizar Dependências:**
    ```bash
    npm install
-   ```
+Despertar o Núcleo (Local):
 
-2. Start the app
+Bash
+npx expo start
+Acessar via Interface:
 
-   ```bash
-   npx expo start
-   ```
+Pressione a para Emulador Android.
 
-In the output, you'll find options to open the app in a
+Pressione i para Simulador iOS.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+Escaneie o QR Code com o app Expo Go para teste em hardware real.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+📁 ARQUITETURA_DE_DADOS
+Plaintext
+/app
+├── (auth)       # Protocolos de Login e Registro
+├── (tabs)       # Módulos Principais (Dashboard, Treinos, Dieta)
+├── components/  # Componentes de Interface de Elite (ThemedText, Drawer)
+├── constants/   # Cores e Variáveis do Sistema
+└── services/    # Conexão com o Banco de Dados Biosyntech
+🛡️ PROTOCOLOS_ADMINISTRATIVOS
+Este repositório está conectado ao SISTEMA_MONARCA. O acesso ao painel de administração (admin.html) é restrito a UIDs autorizados no Firebase.
 
-## Get a fresh project
+Monitoramento: Via Render/Node.js Server.
 
-When you're ready, run:
+Segurança: Regras de Firestore baseadas em UID.
 
-```bash
-npm run reset-project
-```
+🔗 LINKS_DE_ACESSO
+Documentação Expo
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Console Firebase
 
-## Learn more
+Portal de Despertar (Mercado Pago)
 
-To learn more about developing your project with Expo, look at the following resources:
+<p align="center">
+<strong>// FIM_DE_TRANSMISSÃO</strong>
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
 
-## Join the community
+<em>"Supere sua linhagem. Alcance o Rank-S."</em>
+</p>
 
-Join our community of developers creating universal apps.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+-----
+
+### Como aplicar:
+
+1.  Abra o arquivo `README.md` na raiz do seu projeto.
+2.  Apague todo o conteúdo antigo.
+3.  Cole o código acima e salve.
+
+Isso dá uma cara muito mais profissional para quem for olhar o seu código no GitHub ou para v
