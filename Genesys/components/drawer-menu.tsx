@@ -73,7 +73,7 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
       baseItems.push({ 
         label: 'SISTEMA_MONARCA', 
         icon: 'key-outline', 
-        route: 'http://127.0.0.1:5500/Genesys/admin.html'
+        route: 'https://genesysfitsys.onrender.com/admin-portal'
       });
     }
 
