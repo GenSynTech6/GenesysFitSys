@@ -9,6 +9,9 @@ dist/
 web-build/
 expo-env.d.ts
 
+# Remove o arquivo do rastreamento do Git, mas mantém ele no seu PC
+git rm --cached server.js
+
 # Native
 .kotlin/
 *.orig.*
