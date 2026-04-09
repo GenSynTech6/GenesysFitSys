@@ -13,7 +13,8 @@ const { width } = Dimensions.get('window');
 const AUTHORIZED_ADMINS = [
   'n6fLFP6McFVEDuuW6bGOfBlFIJU2', //Elli 1
   'YkFbsUINjHgg1hgMpAAV1lev3R73',//Lavinia(Noiva do Elli)
-  
+  '30905YXrl6YnfuFtEMV8oNFJZJI3',//Arthur 
+  'EwtzdA4FR2OwhzcyBGzbO7qMiq92'//Jheferson
 
 ];
 

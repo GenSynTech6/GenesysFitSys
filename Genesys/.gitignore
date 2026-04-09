@@ -21,7 +21,7 @@ git rm --cached .env
 *.p12
 *.key
 *.mobileprovision
-
+.components/
 # Metro
 .metro-health-check*
 
